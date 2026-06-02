@@ -1,0 +1,8 @@
+[Unit]
+Description=Ontotext GraphDB data volume
+
+[Volume]
+VolumeName=graphdb-data
+
+[Install]
+WantedBy=multi-user.target default.target

@@ -1,0 +1,55 @@
+= Graph Database Quadlets
+:toc: left
+:toclevels: 2
+:sectanchors:
+:sectlinks:
+:icons: font
+
+Podman quadlet definitions for 23 graph database engines, structured for systemd-managed deployment on a Linux desktop or server.
+
+== What's here
+
+Each database engine lives in its own subdirectory and ships three kinds of files:
+
+[cols="<2,<5",options="header"]
+|===
+| File type | Purpose
+
+| `<name>.container`
+| Systemd quadlet: image, ports, volumes, secrets, health check
+
+| `<name>-data.volume`
+| Systemd quadlet: declares a named Podman volume
+
+| `.dotter/global.toml` / `.dotter/local.toml`
+| Dotter configuration: maps source files to symlink targets in `~/.config/containers/systemd/pgdb/`
+|===
+
+The `aerospike-graph/` directory also contains a `.network` file and a second `.container` for the backend Aerospike Server process.
+
+== Documentation
+
+=== Tutorials — learn by doing
+
+* xref:tutorials/getting-started.adoc[Getting started: run your first graph database]
+* xref:tutorials/multi-container-setup.adoc[Multi-container setup: Aerospike Graph]
+
+=== How-to guides — solve a specific problem
+
+* xref:how-to/activate-a-quadlet.adoc[Activate a quadlet]
+* xref:how-to/create-secrets.adoc[Create Podman secrets]
+* xref:how-to/check-health.adoc[Check database health]
+* xref:how-to/update-images.adoc[Update container images]
+* xref:how-to/configure-license-databases.adoc[Configure license-gated databases]
+
+=== Reference — look something up
+
+* xref:reference/database-inventory.adoc[Database inventory]
+* xref:reference/quadlet-fields.adoc[Quadlet fields used in this project]
+* xref:reference/secrets.adoc[Secrets reference]
+
+=== Explanation — understand the design
+
+* xref:explanation/why-quadlets.adoc[Why quadlets instead of Compose or Kubernetes]
+* xref:explanation/architecture.adoc[How the activation pipeline works]
+* xref:explanation/graph-database-categories.adoc[Graph database categories]

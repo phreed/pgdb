@@ -1,0 +1,113 @@
+= How to activate a quadlet
+:toc: left
+:toclevels: 2
+:sectanchors:
+:sectlinks:
+:icons: font
+
+Quadlet symlinks are managed by https://github.com/SuperCuber/dotter[dotter] and installed with `pixi run install`.
+`.dotter/local.toml` controls which database packages dotter deploys.
+
+NOTE: By default only `neo4j` is enabled in `.dotter/local.toml`.
+All other databases are commented out and will not be symlinked until you opt in.
+
+== Step 1 — Choose which databases to install
+
+Open `.dotter/local.toml` and uncomment the packages you want:
+
+[source,toml]
+----
+packages = [
+    # "aerospike-graph",
+    # "allegro-graph",
+    "neo4j",           # <-- enabled by default
+    # "stardog",
+    # ...
+]
+----
+
+Each entry corresponds to a package defined in `.dotter/global.toml`, which maps every quadlet file in `systemd/<database>/` to its target path under `~/.config/containers/systemd/pgdb/<database>/`.
+
+== Step 2 — Create required secrets
+
+If any database you enabled uses `Secret=` directives, create those secrets before installing.
+See xref:create-secrets.adoc[Create Podman secrets] for the full list.
+
+== Step 3 — Deploy symlinks and reload systemd
+
+[source,bash]
+----
+pixi run install
+----
+
+This runs two commands in sequence:
+
+. `dotter deploy` — reads `.dotter/global.toml` and `.dotter/local.toml`, creates the symlink directories, and symlinks each quadlet file to its target path.
+. `systemctl --user daemon-reload` — triggers the Podman quadlet generator, which converts the newly linked `.container` / `.volume` / `.network` files into regular systemd units.
+
+== Step 4 — Verify the units are visible
+
+[source,bash]
+----
+systemctl --user list-units --type=service | grep -i <database>
+----
+
+== Step 5 — Start the enabled services
+
+[source,bash]
+----
+pixi run start
+----
+
+This reads `.dotter/local.toml` and starts every service for each enabled package.
+The `Wants=` ordering in the container file pulls in any volume or network units automatically.
+
+To start a single service manually:
+
+[source,bash]
+----
+systemctl --user start <database>.service
+----
+
+== Step 6 — Check it is running
+
+[source,bash]
+----
+pixi run status
+----
+
+Or query systemd and podman directly:
+
+[source,bash]
+----
+systemctl --user status <database>.service
+podman ps --filter name=systemd-<database> \
+          --format "{{.Names}}\t{{.Status}}"
+----
+
+== Enable start on login (optional)
+
+[source,bash]
+----
+systemctl --user enable <database>.service
+loginctl enable-linger $USER
+----
+
+`loginctl enable-linger` is required for services to start before your first interactive login.
+
+== Deactivate a database
+
+Stop the service and remove the symlinks by commenting it back out in `.dotter/local.toml`, then re-running `pixi run install`.
+Dotter will remove the symlinks for packages that are no longer selected:
+
+[source,bash]
+----
+# 1. Comment out the package in .dotter/local.toml
+# 2. Re-deploy
+pixi run install
+
+# 3. Disable and stop the service
+systemctl --user disable --now <database>.service
+----
+
+To add back later, uncomment the package and run `pixi run install` again.

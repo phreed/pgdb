@@ -1,0 +1,24 @@
+[Unit]
+Description=Apache TinkerPop Gremlin Server — graph traversal language server
+Documentation=https://hub.docker.com/r/tinkerpop/gremlin-server
+Wants=network-online.target
+After=network-online.target
+
+[Container]
+AutoUpdate=registry
+Image=docker.io/tinkerpop/gremlin-server:latest
+ContainerName=systemd-gremlin-server
+PublishPort=8182:8182
+HealthCmd=["curl","-sf","http://localhost:8182/gremlin"]
+HealthInterval=30s
+HealthRetries=3
+HealthStartPeriod=30s
+HealthTimeout=10s
+Label=app=gremlin-server
+
+[Service]
+Restart=always
+TimeoutStartSec=60
+
+[Install]
+WantedBy=multi-user.target default.target

@@ -1,0 +1,25 @@
+[Unit]
+Description=Blazegraph — high-performance SPARQL graph database
+Documentation=https://hub.docker.com/r/lyrasis/blazegraph
+Wants=network-online.target blazegraph-data-volume.service
+After=network-online.target blazegraph-data-volume.service
+
+[Container]
+AutoUpdate=registry
+Image=docker.io/lyrasis/blazegraph:latest
+ContainerName=systemd-blazegraph
+PublishPort=9999:8080
+Volume=blazegraph-data:/data
+HealthCmd=["curl","-sf","http://localhost:8080/bigdata/status"]
+HealthInterval=30s
+HealthRetries=3
+HealthStartPeriod=60s
+HealthTimeout=10s
+Label=app=blazegraph
+
+[Service]
+Restart=always
+TimeoutStartSec=120
+
+[Install]
+WantedBy=multi-user.target default.target

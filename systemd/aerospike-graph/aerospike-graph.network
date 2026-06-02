@@ -1,0 +1,10 @@
+[Unit]
+Description=Internal network for Aerospike Graph Service and Aerospike Server
+
+[Network]
+NetworkName=aerospike-graph
+Driver=bridge
+Internal=false
+
+[Install]
+WantedBy=multi-user.target default.target

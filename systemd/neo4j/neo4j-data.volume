@@ -1,0 +1,8 @@
+[Unit]
+Description=Neo4j data volume
+
+[Volume]
+VolumeName=neo4j-data
+
+[Install]
+WantedBy=multi-user.target default.target

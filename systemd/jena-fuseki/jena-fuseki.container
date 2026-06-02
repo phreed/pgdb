@@ -1,0 +1,27 @@
+[Unit]
+Description=Apache Jena Fuseki — SPARQL server and triplestore
+Documentation=https://hub.docker.com/r/stain/jena-fuseki
+Wants=network-online.target jena-fuseki-data-volume.service
+After=network-online.target jena-fuseki-data-volume.service
+
+[Container]
+AutoUpdate=registry
+Image=docker.io/stain/jena-fuseki:latest
+ContainerName=systemd-jena-fuseki
+PublishPort=3030:3030
+Volume=jena-fuseki-data:/fuseki
+# Environment=ADMIN_PASSWORD=changeme
+Secret=jena-fuseki-admin-password,type=env,target=ADMIN_PASSWORD
+HealthCmd=["curl","-sf","http://localhost:3030/$/ping"]
+HealthInterval=30s
+HealthRetries=3
+HealthStartPeriod=30s
+HealthTimeout=10s
+Label=app=jena-fuseki
+
+[Service]
+Restart=always
+TimeoutStartSec=60
+
+[Install]
+WantedBy=multi-user.target default.target

@@ -1,0 +1,28 @@
+[Unit]
+Description=AllegroGraph — multi-model graph database (SPARQL, Prolog, property graph)
+Documentation=https://hub.docker.com/r/franzinc/agraph
+Wants=network-online.target allegro-graph-data-volume.service
+After=network-online.target allegro-graph-data-volume.service
+
+[Container]
+AutoUpdate=registry
+Image=docker.io/franzinc/agraph:latest
+ContainerName=systemd-allegro-graph
+PublishPort=10035:10035
+Volume=allegro-graph-data:/agraph/data
+Environment=AGRAPH_SUPER_USER=admin
+# Environment=AGRAPH_SUPER_PASSWORD=changeme
+Secret=allegro-graph-password,type=env,target=AGRAPH_SUPER_PASSWORD
+HealthCmd=["curl","-sf","http://localhost:10035/version"]
+HealthInterval=30s
+HealthRetries=3
+HealthStartPeriod=30s
+HealthTimeout=10s
+Label=app=allegro-graph
+
+[Service]
+Restart=always
+TimeoutStartSec=120
+
+[Install]
+WantedBy=multi-user.target default.target

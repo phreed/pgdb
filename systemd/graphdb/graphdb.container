@@ -1,0 +1,25 @@
+[Unit]
+Description=Ontotext GraphDB — RDF triple store and SPARQL endpoint
+Documentation=https://hub.docker.com/r/ontotext/graphdb
+Wants=network-online.target graphdb-data-volume.service
+After=network-online.target graphdb-data-volume.service
+
+[Container]
+AutoUpdate=registry
+Image=docker.io/ontotext/graphdb:latest
+ContainerName=systemd-graphdb
+PublishPort=7200:7200
+Volume=graphdb-data:/opt/graphdb/home
+HealthCmd=["curl","-sf","http://localhost:7200/rest/repositories"]
+HealthInterval=30s
+HealthRetries=3
+HealthStartPeriod=60s
+HealthTimeout=10s
+Label=app=graphdb
+
+[Service]
+Restart=always
+TimeoutStartSec=120
+
+[Install]
+WantedBy=multi-user.target default.target

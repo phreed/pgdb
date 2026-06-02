@@ -1,0 +1,8 @@
+[Unit]
+Description=ArcadeDB data volume
+
+[Volume]
+VolumeName=arcade-db-data
+
+[Install]
+WantedBy=multi-user.target default.target

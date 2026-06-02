@@ -1,0 +1,8 @@
+[Unit]
+Description=Blazegraph data volume
+
+[Volume]
+VolumeName=blazegraph-data
+
+[Install]
+WantedBy=multi-user.target default.target

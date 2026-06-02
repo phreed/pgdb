@@ -1,0 +1,28 @@
+[Unit]
+Description=Stardog — enterprise knowledge graph platform
+Documentation=https://hub.docker.com/r/stardog/stardog
+Wants=network-online.target stardog-data-volume.service
+After=network-online.target stardog-data-volume.service
+
+[Container]
+AutoUpdate=registry
+Image=docker.io/stardog/stardog:latest
+ContainerName=systemd-stardog
+PublishPort=5820:5820
+Volume=stardog-data:/var/opt/stardog
+# Stardog requires a valid license file placed in the data directory
+# Copy license: podman cp stardog-license.bin systemd-stardog:/var/opt/stardog/
+# Or mount a host directory containing the license file
+HealthCmd=["curl","-sf","http://localhost:5820/admin/status"]
+HealthInterval=30s
+HealthRetries=5
+HealthStartPeriod=90s
+HealthTimeout=10s
+Label=app=stardog
+
+[Service]
+Restart=always
+TimeoutStartSec=180
+
+[Install]
+WantedBy=multi-user.target default.target

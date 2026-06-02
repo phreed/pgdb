@@ -1,0 +1,28 @@
+[Unit]
+Description=Ultipa Graph — real-time graph database for large-scale analytics
+Documentation=https://docs.ultipa.com/on-premise/deploy-ultipa-manager
+Wants=network-online.target ultipa-data-volume.service
+After=network-online.target ultipa-data-volume.service
+
+[Container]
+AutoUpdate=registry
+# Enterprise distribution — contact Ultipa for registry credentials and exact image tag
+# Registry may be: registry.us.ultipa.com or similar
+Image=docker.io/ultipa/ultipa-server:latest
+ContainerName=systemd-ultipa
+PublishPort=6379:6379
+PublishPort=9000:9000
+Volume=ultipa-data:/var/lib/ultipa
+HealthCmd=["curl","-sf","http://localhost:9000/health"]
+HealthInterval=30s
+HealthRetries=3
+HealthStartPeriod=60s
+HealthTimeout=10s
+Label=app=ultipa
+
+[Service]
+Restart=always
+TimeoutStartSec=120
+
+[Install]
+WantedBy=multi-user.target default.target

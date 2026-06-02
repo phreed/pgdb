@@ -1,0 +1,90 @@
+= How to update container images
+:toc: left
+:toclevels: 2
+:sectanchors:
+:sectlinks:
+:icons: font
+
+All containers in this collection include `AutoUpdate=registry`, which enables Podman's automatic update mechanism.
+
+== How automatic updates work
+
+`AutoUpdate=registry` tells the `podman-auto-update` service to:
+
+. Check the remote registry for a newer digest of the image tag (e.g. `neo4j:latest`).
+. Pull the new image if the digest differs.
+. Restart the affected systemd service.
+
+The `podman-auto-update` timer runs once daily by default.
+
+== Trigger an update manually
+
+Check for available updates without applying them:
+
+[source,bash]
+----
+podman auto-update --dry-run
+----
+
+Apply all pending updates:
+
+[source,bash]
+----
+podman auto-update
+----
+
+== Update a specific database
+
+There is no per-service flag for `podman auto-update`.
+To update one image manually:
+
+[source,bash]
+----
+# Pull the new image
+podman pull docker.io/neo4j:latest
+
+# Restart the service to use it
+systemctl --user restart neo4j.service
+----
+
+Remove unused image layers after updating:
+
+[source,bash]
+----
+podman image prune
+----
+
+== Pin a specific image version
+
+To stop a database from auto-updating, replace `:latest` with a specific tag in the `.container` file.
+For example, to pin Neo4j to 5.18:
+
+[source,ini]
+----
+Image=docker.io/neo4j:5.18
+----
+
+Then reload and restart:
+
+[source,bash]
+----
+systemctl --user daemon-reload
+systemctl --user restart neo4j.service
+----
+
+NOTE: The only image pinned by default in this collection is DataStax Enterprise, which uses `datastax/dse-server:6.8.49`.
+
+== Roll back after a bad update
+
+[source,bash]
+----
+# Find the previous image ID
+podman image history docker.io/neo4j:latest
+
+# Re-tag the previous image
+podman tag <old-image-id> docker.io/neo4j:latest
+
+systemctl --user restart neo4j.service
+----
+
+TIP: For production use, pin to an explicit version tag rather than `:latest` so rollback is trivial.

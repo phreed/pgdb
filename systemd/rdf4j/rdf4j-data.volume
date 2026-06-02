@@ -1,0 +1,8 @@
+[Unit]
+Description=Eclipse RDF4J data volume
+
+[Volume]
+VolumeName=rdf4j-data
+
+[Install]
+WantedBy=multi-user.target default.target

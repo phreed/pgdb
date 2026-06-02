@@ -1,0 +1,189 @@
+= Why quadlets instead of Compose or Kubernetes
+:toc: left
+:toclevels: 2
+:sectanchors:
+:sectlinks:
+:icons: font
+
+This project uses systemd quadlets to manage containerised graph databases.
+This page explains why, and what you give up compared to alternatives.
+
+== What quadlets are
+
+A Podman quadlet is a `.container`, `.volume`, or `.network` file that the systemd quadlet generator converts into a regular systemd unit at daemon-reload time.
+The result is a first-class systemd service: you can `start`, `stop`, `enable`, `disable`, `mask`, and monitor it exactly like any other unit.
+
+Crucially, quadlets require no daemon beyond systemd itself.
+There is no Compose daemon, no kubelet, no container orchestrator process running in the background.
+
+For an in-depth look at the transformation steps, see xref:architecture.adoc[How the activation pipeline works].
+
+== Compared to Docker Compose / Podman Compose
+
+=== Advantages of quadlets
+
+Native system integration::
+  Services appear in `journalctl`, obey `WantedBy=default.target`, and participate in the systemd dependency graph alongside non-container services.
+
+No extra process::
+  Docker Compose requires the Docker daemon.
+  Podman Compose requires Python and the compose script.
+  Quadlets require only Podman and systemd — both are already present on any modern Fedora/RHEL/Ubuntu system.
+
+User-session services::
+  A quadlet under `~/.config/containers/systemd/` runs as an unprivileged user service without root.
+  The databases in this project all run rootless.
+
+Standard tooling::
+  `systemctl status`, `journalctl`, `systemctl enable` work without learning a new CLI.
+
+Restart policies are policy, not code::
+  `Restart=always` in `[Service]` is enforced by systemd's supervisor, not by the Compose wrapper.
+
+=== Disadvantages of quadlets
+
+No `--scale`::
+  Horizontal scaling requires writing additional unit files or using a template unit.
+  These quadlets are single-instance by design.
+
+Multi-container coordination is manual::
+  The `aerospike-graph/` setup demonstrates this: you declare the ordering in `Wants=` / `After=`, not in a `depends_on:` block.
+  See xref:../tutorials/multi-container-setup.adoc[Multi-container setup tutorial].
+
+No Compose file portability::
+  You cannot share a Compose file and a set of quadlets interchangeably.
+
+== Compared to Kubernetes / Podman Kube
+
+=== Advantages of quadlets over Kube manifests
+
+No Kubernetes required::
+  Running k3s or a full cluster for local graph database development is significant overhead.
+
+Simpler file format::
+  A `.container` file is closer to a `docker run` command than to a Kubernetes Pod spec.
+
+Direct systemd integration::
+  `podman kube play` creates containers outside the systemd dependency graph unless wrapped in a service unit.
+  Quadlets are the systemd-native path.
+
+=== Disadvantages versus Kubernetes
+
+No built-in load balancing, rolling updates, or horizontal scaling::
+  For production multi-node graph database deployments, Kubernetes is the better choice.
+
+No declarative desired-state reconciliation::
+  If a volume is deleted manually, systemd does not recreate it.
+  Kubernetes controllers do.
+
+== User services vs system services
+
+=== What "user service" means
+
+Every quadlet in this project is a **systemd user service**.
+User services are managed per-user, not system-wide:
+
+[cols="<2,<5",options="header"]
+|===
+| Property | User service (this project)
+
+| Unit file location
+| `~/.config/containers/systemd/pgdb/<database>/`
+
+| `systemctl` flag
+| `--user` required on every command
+
+| Podman mode
+| Rootless — containers run inside a user namespace with remapped UIDs
+
+| Volume storage
+| `~/.local/share/containers/storage/volumes/`
+
+| Secret storage
+| `~/.local/share/containers/storage/secrets/`
+
+| Starts at
+| First user login (or earlier if `loginctl enable-linger` is set)
+
+| Stops at
+| Last user session ends (unless lingering is active)
+
+| Privileged ports
+| Ports < 1024 unavailable without extra capability grants
+|===
+
+All databases in this collection use ports above 1024 (lowest is Apache AGE at 5432), so rootless operation works without compromise.
+No `sudo` is required to start, stop, or inspect any container.
+
+=== Converting to system services
+
+To run these as system services — starting at boot without a user session, managed by root — the following changes are required:
+
+. *Move quadlet files to a system path.*
++
+System quadlets are read from `/etc/containers/systemd/` (persistent, admin-managed).
+Update `.dotter/global.toml` to target `/etc/containers/systemd/pgdb/<database>/` instead of `~/.config/containers/systemd/pgdb/<database>/`.
+
+. *Re-create Podman secrets as root.*
++
+Rootless and rootful Podman maintain separate secret stores.
+After moving to a system service, re-create every secret without a user context:
++
+[source,bash]
+----
+sudo podman secret create neo4j-auth -
+sudo podman secret create jena-fuseki-admin-password -
+# ... repeat for all secrets
+----
+
+. *Drop `--user` from all management commands.*
++
+[source,bash]
+----
+# User service (current)
+systemctl --user start neo4j.service
+journalctl --user -eu neo4j.service
+
+# System service
+sudo systemctl start neo4j.service
+sudo journalctl -eu neo4j.service
+----
+
+. *Update the pixi scripts.*
++
+Every `^systemctl --user` and `^journalctl --user` call in `pixi-script/` must have `--user` removed.
+The `mod.nu` helper `service-state` and all `do-*` helpers in `trouble.nu` would need updating.
+
+. *Remove the lingering requirement.*
++
+System services start at boot unconditionally; `loginctl enable-linger` is irrelevant.
+
+. *Reload the system daemon after symlinking.*
++
+[source,bash]
+----
+sudo systemctl daemon-reload
+----
+
+=== Why rootless is preferred here
+
+Running containers as root gives the container engine access to the full host UID space.
+A vulnerability in a container image can then affect the host system at root level.
+All databases in this collection are third-party images; rootless containment is the safer default for a development workstation.
+For a production deployment where you control the image supply chain and need system-level integration, system services are appropriate.
+
+== The dotter integration
+
+Symlinks are managed by https://github.com/SuperCuber/dotter[dotter], configured by two files in `.dotter/`:
+
+`.dotter/global.toml`::
+  Defines one package per database engine, mapping each `systemd/<database>/<file>` source to its `~/.config/containers/systemd/pgdb/<database>/<file>` target.
+
+`.dotter/local.toml`::
+  Lists which packages to deploy on this machine.
+  By default only `neo4j` is enabled; all other databases are commented out.
+
+This pattern decouples the repository from the live systemd configuration directory: you can keep the quadlets in version control, review changes as diffs, and opt individual databases in or out by editing `.dotter/local.toml`.
+The quadlets only become active after `dotter deploy` symlinks them and `daemon-reload` runs.
+
+See xref:../how-to/activate-a-quadlet.adoc[Activate a quadlet] for the step-by-step procedure.

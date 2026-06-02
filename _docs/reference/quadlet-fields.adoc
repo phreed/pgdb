@@ -1,0 +1,139 @@
+= Quadlet fields reference
+:toc: left
+:toclevels: 3
+:sectanchors:
+:sectlinks:
+:icons: font
+
+This page documents the systemd quadlet fields used in `.container`, `.volume`, and `.network` files in this project.
+For the full specification see `man 5 podman-systemd.unit`.
+
+== `.container` file fields
+
+=== The `[Unit]` section
+
+`Description=`::
+  Human-readable label shown in `systemctl status` and `journalctl`.
+
+`Documentation=`::
+  URL to upstream documentation.
+  Not used by systemd; purely informational.
+
+`Wants=` / `After=`::
+  Declares dependencies and ordering.
+  `Wants=` means "try to start these too"; `After=` means "wait until these are active before starting this one".
+  Both typically list:
++
+* `network-online.target` — waits for network to be up
+* `<name>-data-volume.service` — waits for the volume unit to have run
+* `<name>.network` — waits for the Podman network to exist (multi-container only)
+
+=== The `[Container]` section
+
+`AutoUpdate=registry`::
+  Opts this container into `podman auto-update`.
+  When the `podman-auto-update.timer` fires, Podman pulls the latest digest for this image tag and restarts the service if the digest changed.
+  See xref:../how-to/update-images.adoc[Update container images].
+
+`ContainerName=`::
+  Sets the Podman container name (as seen in `podman ps`).
+  All containers in this project use the prefix `systemd-` to distinguish them from manually run containers.
+
+`Environment=`::
+  Sets a single environment variable inside the container.
+  May appear multiple times for multiple variables.
+  Used for non-sensitive configuration (usernames, feature flags, backend addresses).
+
+`Exec=`::
+  Overrides the container's default command.
+  Used only in `datastax-graph` (`Exec=-g`) to enable DSE Graph mode.
+
+`HealthCmd=`::
+  Shell command to run inside the container to determine health.
+  Exit code 0 = healthy, non-zero = unhealthy.
+  See xref:check-health.adoc[Check database health] for all endpoints.
+
+`HealthInterval=`::
+  How often to run the health check after `HealthStartPeriod` has elapsed.
+  All containers in this project use `30s`.
+
+`HealthRetries=`::
+  Number of consecutive failures required before the container is marked `unhealthy`.
+  This project uses 3–5 depending on the database's reliability.
+
+`HealthStartPeriod=`::
+  Grace period after container start before health check failures count.
+  Ranges from 30 s (fast databases) to 120 s (JVM-based databases like DataStax, JanusGraph).
+
+`HealthTimeout=`::
+  Maximum time for a single health check run.
+  All containers use 10–20 s.
+
+`Image=`::
+  The OCI image reference to pull and run.
+  Follows standard `registry/repository:tag` notation.
+
+`Label=`::
+  Adds a Podman label to the container.
+  Used for `app=<name>` and `component=<role>` labels.
+  May appear multiple times.
+
+`Network=`::
+  Attaches the container to a named Podman network defined by a `.network` quadlet file.
+  Used only in `aerospike-graph/` for inter-container communication.
+  See xref:../tutorials/multi-container-setup.adoc[Multi-container setup tutorial].
+
+`PublishPort=`::
+  Maps a host port to a container port in `host:container` format.
+  May appear multiple times.
+  All mappings in this project are TCP.
+
+`Secret=`::
+  Injects a Podman secret as an environment variable.
+  Format: `Secret=<secret-name>,type=env,target=<ENV_VAR_NAME>`.
+  The secret value is never visible in `podman inspect`.
+  See xref:secrets.adoc[Secrets reference] and xref:../how-to/create-secrets.adoc[Create Podman secrets].
+
+`Volume=`::
+  Mounts a named volume or host path into the container.
+  Format: `<volume-name>:<container-path>`.
+  May appear multiple times.
+
+=== The `[Service]` section
+
+`Restart=always`::
+  Systemd will restart the container if it exits for any reason (including a clean exit).
+  All containers in this project use this policy.
+
+`TimeoutStartSec=`::
+  How long systemd waits for the service to report as started before marking it failed.
+  Ranges from 60 s to 300 s across this project.
+
+=== The `[Install]` section
+
+`WantedBy=multi-user.target default.target`::
+  Makes the service start when `systemctl --user enable` is run and the user's default session target is reached.
+
+== `.volume` file fields
+
+`[Volume]` / `VolumeName=`::
+  Declares a Podman named volume.
+  The name here must exactly match the volume name used in `Volume=` directives in container files.
++
+All volume files in this project are minimal — they declare the volume name and nothing else.
+Podman creates the underlying storage directory on first use.
+
+== `.network` file fields
+
+Only used in `aerospike-graph/aerospike-graph.network`.
+
+`[Network]` / `NetworkName=`::
+  The Podman network name.
+  Referenced in container files as `Network=<name>.network`.
+
+`Driver=bridge`::
+  Standard bridge network.
+  Containers on the same bridge can communicate using their `ContainerName` as a hostname.
+
+`Internal=false`::
+  Allows containers on the network to reach external internet addresses.

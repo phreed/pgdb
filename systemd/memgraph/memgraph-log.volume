@@ -1,0 +1,8 @@
+[Unit]
+Description=Memgraph log volume
+
+[Volume]
+VolumeName=memgraph-log
+
+[Install]
+WantedBy=multi-user.target default.target

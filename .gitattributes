@@ -1,0 +1,6 @@
+# SCM syntax highlighting & preventing 3-way merges
+pixi.lock merge=binary linguist-language=YAML linguist-generated=true -diff
+
+# Encrypt secrets file with git-crypt before committing.
+# Force-track with: git add -f podman.secret.toml
+*.secret.toml filter=git-crypt diff=git-crypt merge=git-crypt -text

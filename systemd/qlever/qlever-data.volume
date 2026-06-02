@@ -1,0 +1,8 @@
+[Unit]
+Description=QLever index volume
+
+[Volume]
+VolumeName=qlever-data
+
+[Install]
+WantedBy=multi-user.target default.target

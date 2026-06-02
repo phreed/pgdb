@@ -1,0 +1,8 @@
+[Unit]
+Description=Apache Jena Fuseki data volume
+
+[Volume]
+VolumeName=jena-fuseki-data
+
+[Install]
+WantedBy=multi-user.target default.target

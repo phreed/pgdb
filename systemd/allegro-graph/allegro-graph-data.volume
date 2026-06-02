@@ -1,0 +1,8 @@
+[Unit]
+Description=AllegroGraph data volume
+
+[Volume]
+VolumeName=allegro-graph-data
+
+[Install]
+WantedBy=multi-user.target default.target

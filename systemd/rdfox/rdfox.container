@@ -1,0 +1,30 @@
+[Unit]
+Description=RDFox — high-performance in-memory RDF/Datalog knowledge graph store
+Documentation=https://docs.oxfordsemantic.tech/running-rdfox.html#running-rdfox-in-docker
+Wants=network-online.target rdfox-data-volume.service
+After=network-online.target rdfox-data-volume.service
+
+[Container]
+AutoUpdate=registry
+# Requires a valid license key from Oxford Semantic Technologies
+# Pull: podman login registry.oxfordsemantic.tech
+Image=registry.oxfordsemantic.tech/rdfox:latest
+ContainerName=systemd-rdfox
+PublishPort=12110:12110
+Volume=rdfox-data:/home/rdfox/.RDFox
+# License key must be provided via environment or volume-mounted license file
+# Environment=RDFOX_LICENSE_CONTENT=<base64-encoded-license>
+Secret=rdfox-license,type=env,target=RDFOX_LICENSE_CONTENT
+HealthCmd=["curl","-sf","http://localhost:12110/datastores"]
+HealthInterval=30s
+HealthRetries=3
+HealthStartPeriod=30s
+HealthTimeout=10s
+Label=app=rdfox
+
+[Service]
+Restart=always
+TimeoutStartSec=60
+
+[Install]
+WantedBy=multi-user.target default.target

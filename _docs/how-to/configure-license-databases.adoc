@@ -1,0 +1,155 @@
+= How to configure license-gated databases
+:toc: left
+:toclevels: 2
+:sectanchors:
+:sectlinks:
+:icons: font
+
+Four databases in this collection require a license or registry login before the container will start successfully.
+
+== Oracle Graph Server
+
+Oracle Graph Server is distributed through Oracle's Container Registry, which requires a free Oracle account and explicit license acceptance before pulling.
+
+=== 1. Create a free Oracle account
+
+Visit https://container-registry.oracle.com and sign in or register.
+
+=== 2. Accept the license
+
+In the Oracle Container Registry UI, navigate to:
+*Database → graph-server-client-lite* and click *Accept License*.
+
+=== 3. Log in with Podman
+
+[source,bash]
+----
+podman login container-registry.oracle.com
+----
+
+Enter your Oracle account username and password when prompted.
+Podman stores the credentials in `~/.config/containers/auth.json`.
+
+=== 4. Activate the quadlet
+
+[source,bash]
+----
+mkdir -p ~/.config/containers/systemd/pgdb/oracle-graph
+ln -sf $REPO/systemd/oracle-graph/oracle-graph.container \
+       ~/.config/containers/systemd/pgdb/oracle-graph/
+ln -sf $REPO/systemd/oracle-graph/oracle-graph-data.volume \
+       ~/.config/containers/systemd/pgdb/oracle-graph/
+systemctl --user daemon-reload
+systemctl --user start oracle-graph.service
+----
+
+The Oracle Graph Server UI listens on HTTPS at port 7007.
+
+== RDFox
+
+RDFox is available from Oxford Semantic Technologies' private registry.
+A license file is required.
+
+=== 1. Obtain a license
+
+Contact Oxford Semantic Technologies at https://www.oxfordsemantic.tech/rdfox to obtain a trial or commercial license file (`*.rdfox-license`).
+
+=== 2. Log in to the registry
+
+[source,bash]
+----
+podman login registry.oxfordsemantic.tech
+----
+
+=== 3. Create the license secret
+
+RDFox reads its license from the `RDFOX_LICENSE_CONTENT` environment variable, which must contain the base64-encoded license file content.
+
+[source,bash]
+----
+ENCODED=$(base64 -w0 /path/to/your.rdfox-license)
+echo -n "$ENCODED" | podman secret create rdfox-license -
+----
+
+=== 4. Activate the quadlet
+
+[source,bash]
+----
+mkdir -p ~/.config/containers/systemd/pgdb/rdfox
+ln -sf $REPO/systemd/rdfox/rdfox.container \
+       ~/.config/containers/systemd/pgdb/rdfox/
+ln -sf $REPO/systemd/rdfox/rdfox-data.volume \
+       ~/.config/containers/systemd/pgdb/rdfox/
+systemctl --user daemon-reload
+systemctl --user start rdfox.service
+----
+
+RDFox's REST API and web console are at port 12110.
+
+== Stardog
+
+Stardog requires a license file placed inside the data volume before the server will start.
+
+=== 1. Obtain a license
+
+Download a free developer license from https://www.stardog.com/get-started/ or use a commercial license.
+The license file is named `stardog-license-key.bin`.
+
+=== 2. Start the volume first
+
+[source,bash]
+----
+mkdir -p ~/.config/containers/systemd/pgdb/stardog
+ln -sf $REPO/systemd/stardog/stardog.container \
+       ~/.config/containers/systemd/pgdb/stardog/
+ln -sf $REPO/systemd/stardog/stardog-data.volume \
+       ~/.config/containers/systemd/pgdb/stardog/
+systemctl --user daemon-reload
+systemctl --user start stardog-data-volume.service
+----
+
+=== 3. Copy the license into the volume
+
+[source,bash]
+----
+cp /path/to/stardog-license-key.bin \
+   "$(podman volume inspect stardog-data --format '{{.Mountpoint}}')/"
+----
+
+=== 4. Start the service
+
+[source,bash]
+----
+systemctl --user start stardog.service
+----
+
+The Stardog HTTP server is at port 5820.
+Default credentials are `admin` / `admin`.
+
+== DataStax Enterprise Graph
+
+DataStax Enterprise does not require a registry login.
+The license must be accepted via an environment variable, which is *already set* in the quadlet:
+
+[source,ini]
+----
+Environment=DS_LICENSE=accept
+----
+
+No additional steps are needed.
+Activate the quadlet normally:
+
+[source,bash]
+----
+mkdir -p ~/.config/containers/systemd/pgdb/datastax-graph
+ln -sf $REPO/systemd/datastax-graph/datastax-graph.container \
+       ~/.config/containers/systemd/pgdb/datastax-graph/
+ln -sf $REPO/systemd/datastax-graph/datastax-graph-data.volume \
+       ~/.config/containers/systemd/pgdb/datastax-graph/
+systemctl --user daemon-reload
+systemctl --user start datastax-graph.service
+----
+
+The `-g` flag in `Exec=-g` activates DSE Graph mode alongside the Cassandra engine.
+First startup takes two to three minutes.
+The CQL port is 9042 and the Gremlin port is 8182.

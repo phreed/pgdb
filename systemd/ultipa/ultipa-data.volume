@@ -1,0 +1,8 @@
+[Unit]
+Description=Ultipa Graph data volume
+
+[Volume]
+VolumeName=ultipa-data
+
+[Install]
+WantedBy=multi-user.target default.target

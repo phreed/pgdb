@@ -1,0 +1,8 @@
+[Unit]
+Description=Apache AGE PostgreSQL data volume
+
+[Volume]
+VolumeName=apache-age-data
+
+[Install]
+WantedBy=multi-user.target default.target

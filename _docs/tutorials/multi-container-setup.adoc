@@ -1,0 +1,164 @@
+= Multi-container setup: Aerospike Graph
+:toc: left
+:toclevels: 2
+:sectanchors:
+:sectlinks:
+:icons: font
+
+This tutorial covers *Aerospike Graph*, the only database in this collection that requires two cooperating containers.
+Walking through it teaches you how inter-container networking works with quadlets.
+
+The two services are:
+
+[cols="<2,<3,<3",options="header"]
+|===
+| Container | Unit name | Role
+
+| `aerospike-server`
+| `aerospike-server.service`
+| Aerospike key-value store (data backend)
+
+| `aerospike-graph`
+| `aerospike-graph.service`
+| Gremlin traversal API (graph frontend)
+|===
+
+They communicate over a dedicated bridge network declared in `aerospike-graph.network`.
+
+.Prerequisites
+* Completed xref:getting-started.adoc[Getting started] or familiar with the basics.
+* Podman 4.4 or later.
+* systemd user session active.
+
+== Step 1 — Install the quadlet files
+
+Create the target directory:
+
+[source,bash]
+----
+mkdir -p ~/.config/containers/systemd/pgdb/aerospike-graph
+----
+
+Symlink all four files in one shot:
+
+[source,bash]
+----
+REPO=/var/home/phreed/Projects/hydra/pgdb
+
+for f in aerospike-graph.network aerospike-server.container \
+          aerospike-graph.container aerospike-graph-data.volume; do
+  ln -sf "$REPO/systemd/aerospike-graph/$f" \
+         ~/.config/containers/systemd/pgdb/aerospike-graph/$f
+done
+----
+
+== Step 2 — Understand the dependency chain
+
+Open `aerospike-graph.container` and look at the `[Unit]` section:
+
+[source,ini]
+----
+Wants=network-online.target aerospike-graph.network aerospike-server.service
+After=network-online.target aerospike-graph.network aerospike-server.service
+----
+
+This means: systemd will start the network, then the server, then the graph service — in that order — whenever you start `aerospike-graph.service`.
+
+The network is declared in `aerospike-graph.network`:
+
+[source,ini]
+----
+[Network]
+NetworkName=aerospike-graph
+Driver=bridge
+Internal=false
+----
+
+Both containers reference it with `Network=aerospike-graph.network` in their `[Container]` sections.
+
+== Step 3 — Understand inter-container DNS
+
+Inside the Podman network, each container is reachable by its `ContainerName`.
+The graph service finds the server using:
+
+[source,ini]
+----
+Environment=aerospike.client.host=aerospike-server
+Environment=aerospike.client.port=3000
+----
+
+`aerospike-server` here is the `ContainerName=systemd-aerospike-server` value — Podman's internal DNS resolves that name on the `aerospike-graph` network.
+
+== Step 4 — Reload and start
+
+[source,bash]
+----
+systemctl --user daemon-reload
+systemctl --user start aerospike-graph.service
+----
+
+Starting `aerospike-graph.service` is sufficient; systemd follows the `Wants=` chain automatically.
+
+Watch the startup sequence:
+
+[source,bash]
+----
+journalctl --user -f \
+  -u aerospike-server.service \
+  -u aerospike-graph.service
+----
+
+You expect to see the server initialise first, then the graph service connect to it.
+
+== Step 5 — Verify connectivity
+
+Check both containers are running:
+
+[source,bash]
+----
+podman ps --filter label=app=aerospike-graph \
+          --format "{{.Names}}\t{{.Status}}"
+----
+
+Expected output:
+
+----
+systemd-aerospike-server   Up 2 minutes (healthy)
+systemd-aerospike-graph    Up 1 minute (healthy)
+----
+
+Confirm the Gremlin endpoint responds:
+
+[source,bash]
+----
+curl -s -X POST http://localhost:8182/gremlin \
+  -H "Content-Type: application/json" \
+  -d '{"gremlin": "g.V().limit(1)"}'
+----
+
+== Step 6 — Inspect the network
+
+Verify both containers are attached to the `aerospike-graph` network:
+
+[source,bash]
+----
+podman network inspect aerospike-graph
+----
+
+The `containers` section should list both `systemd-aerospike-server` and `systemd-aerospike-graph`.
+
+== Step 7 — Stop the stack
+
+[source,bash]
+----
+systemctl --user stop aerospike-graph.service aerospike-server.service
+----
+
+Data in the `aerospike-graph-data` volume persists.
+
+== What you learned
+
+* A `.network` quadlet file creates a Podman network managed by systemd.
+* `Wants=` / `After=` in the graph service's unit guarantees startup ordering.
+* Containers on the same Podman network resolve each other by `ContainerName`.
+* You only need to start the "leaf" service; systemd pulls in the dependencies.

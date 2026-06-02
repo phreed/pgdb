@@ -1,0 +1,33 @@
+[Unit]
+Description=Neo4j — native graph database
+Documentation=https://hub.docker.com/_/neo4j
+Wants=network-online.target neo4j-data-volume.service neo4j-logs-volume.service neo4j-plugins-volume.service
+After=network-online.target neo4j-data-volume.service neo4j-logs-volume.service neo4j-plugins-volume.service
+
+[Container]
+AutoUpdate=registry
+Image=docker.io/neo4j:latest
+ContainerName=systemd-neo4j
+PublishPort=7474:7474
+PublishPort=7687:7687
+Volume=neo4j-data:/data
+Volume=neo4j-logs:/logs
+Volume=neo4j-plugins:/plugins
+# NEO4J_AUTH format: neo4j/<password> or "none" to disable auth
+# Environment=NEO4J_AUTH=none
+Secret=neo4j-auth,type=env,target=NEO4J_AUTH
+Environment=NEO4J_PLUGINS=["apoc"]
+Environment=NEO4J_dbms_security_procedures_unrestricted=apoc.*
+HealthCmd=["wget","-q","--spider","http://localhost:7474"]
+HealthInterval=30s
+HealthRetries=5
+HealthStartPeriod=60s
+HealthTimeout=10s
+Label=app=neo4j
+
+[Service]
+Restart=always
+TimeoutStartSec=300
+
+[Install]
+WantedBy=multi-user.target default.target

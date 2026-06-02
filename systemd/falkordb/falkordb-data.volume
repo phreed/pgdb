@@ -1,0 +1,8 @@
+[Unit]
+Description=FalkorDB data volume
+
+[Volume]
+VolumeName=falkordb-data
+
+[Install]
+WantedBy=multi-user.target default.target

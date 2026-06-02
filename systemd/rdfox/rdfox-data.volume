@@ -1,0 +1,8 @@
+[Unit]
+Description=RDFox data volume
+
+[Volume]
+VolumeName=rdfox-data
+
+[Install]
+WantedBy=multi-user.target default.target

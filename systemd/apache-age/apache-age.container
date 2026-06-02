@@ -1,0 +1,29 @@
+[Unit]
+Description=Apache AGE — PostgreSQL extension for graph queries
+Documentation=https://hub.docker.com/r/apache/age
+Wants=network-online.target apache-age-data-volume.service
+After=network-online.target apache-age-data-volume.service
+
+[Container]
+AutoUpdate=registry
+Image=docker.io/apache/age:latest
+ContainerName=systemd-apache-age
+PublishPort=5432:5432
+Volume=apache-age-data:/var/lib/postgresql/data
+Environment=POSTGRES_USER=age_user
+Environment=POSTGRES_DB=age_db
+# Environment=POSTGRES_PASSWORD=changeme
+Secret=apache-age-password,type=env,target=POSTGRES_PASSWORD
+HealthCmd=["pg_isready","-U","age_user","-d","age_db"]
+HealthInterval=30s
+HealthRetries=3
+HealthStartPeriod=30s
+HealthTimeout=10s
+Label=app=apache-age
+
+[Service]
+Restart=always
+TimeoutStartSec=120
+
+[Install]
+WantedBy=multi-user.target default.target

@@ -1,0 +1,31 @@
+[Unit]
+Description=ArcadeDB — multi-model database with graph, document, key/value, and time-series
+Documentation=https://hub.docker.com/r/arcadedb/arcadedb
+Wants=network-online.target arcade-db-data-volume.service
+After=network-online.target arcade-db-data-volume.service
+
+[Container]
+AutoUpdate=registry
+Image=docker.io/arcadedb/arcadedb:latest
+ContainerName=systemd-arcade-db
+PublishPort=2480:2480
+PublishPort=2424:2424
+PublishPort=8182:8182
+Volume=arcade-db-data:/home/arcadedb/databases
+Environment=arcadedb.server.defaultDatabases=GratefulDeadConcerts[admin:admin]
+# Set root password via secret
+# Environment=arcadedb.server.rootPassword=changeme
+Secret=arcade-db-root-password,type=env,target=arcadedb.server.rootPassword
+HealthCmd=["curl","-sf","http://localhost:2480/api/v1/ready"]
+HealthInterval=30s
+HealthRetries=3
+HealthStartPeriod=30s
+HealthTimeout=10s
+Label=app=arcade-db
+
+[Service]
+Restart=always
+TimeoutStartSec=120
+
+[Install]
+WantedBy=multi-user.target default.target

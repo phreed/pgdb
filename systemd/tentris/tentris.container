@@ -1,0 +1,25 @@
+[Unit]
+Description=Tentris — tensor-based RDF store and SPARQL endpoint
+Documentation=https://github.com/dice-group/tentris
+Wants=network-online.target tentris-data-volume.service
+After=network-online.target tentris-data-volume.service
+
+[Container]
+AutoUpdate=registry
+Image=ghcr.io/dice-group/tentris-server:latest
+ContainerName=systemd-tentris
+PublishPort=9080:9080
+Volume=tentris-data:/tentris-data
+HealthCmd=["curl","-sf","http://localhost:9080/sparql?query=SELECT+*+WHERE%7B%7D&format=json"]
+HealthInterval=30s
+HealthRetries=3
+HealthStartPeriod=30s
+HealthTimeout=10s
+Label=app=tentris
+
+[Service]
+Restart=always
+TimeoutStartSec=60
+
+[Install]
+WantedBy=multi-user.target default.target

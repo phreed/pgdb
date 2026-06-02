@@ -1,0 +1,150 @@
+= Getting started: run your first graph database
+:toc: left
+:toclevels: 2
+:sectanchors:
+:sectlinks:
+:icons: font
+
+This tutorial walks you through activating *Neo4j* from these quadlets.
+By the end you will have a running Neo4j instance reachable in a browser, have created a Podman secret, and understand the shape of every quadlet in this collection.
+
+Neo4j is a good first choice: it starts reliably, has a built-in browser UI, and uses a well-known Bolt client protocol.
+
+.Prerequisites
+* Podman 4.4 or later (`podman --version`)
+* systemd user session active (`systemctl --user status`)
+* This repository checked out locally
+* https://pixi.sh[pixi] installed (`pixi --version`)
+* https://github.com/SuperCuber/dotter[dotter] available — provided by `pixi run` via the `dotter-rs` dependency
+
+== Step 1 — Install the quadlet files
+
+Symlinks are managed by dotter.
+Neo4j is *enabled by default* in `.dotter/local.toml` — no edits needed for this tutorial.
+
+Run the install task:
+
+[source,bash]
+----
+pixi run install
+----
+
+This runs `dotter deploy` (which creates the symlinks from `systemd/neo4j/` into `~/.config/containers/systemd/pgdb/neo4j/`) followed by `systemctl --user daemon-reload` to make systemd pick up the new units.
+
+TIP: To install additional databases later, uncomment their entries in `.dotter/local.toml` and run `pixi run install` again.
+See xref:../how-to/activate-a-quadlet.adoc[How to activate a quadlet] for details.
+
+== Step 2 — Create the Neo4j auth secret
+
+The container file uses a Podman secret rather than an inline password:
+
+[source,ini]
+----
+Secret=neo4j-auth,type=env,target=NEO4J_AUTH
+----
+
+The value must be either `neo4j/<password>` (sets the `neo4j` user password) or the literal string `none` to disable authentication entirely.
+
+Create the secret:
+
+[source,bash]
+----
+echo -n "neo4j/changeme" | podman secret create neo4j-auth -
+----
+
+Verify it exists:
+
+[source,bash]
+----
+podman secret ls
+----
+
+== Step 3 — Start Neo4j
+
+[source,bash]
+----
+pixi run start
+----
+
+This reads `.dotter/local.toml`, finds every `.container` file for each enabled package, and calls `systemctl --user start` for each one.
+The `Wants=` ordering in the container file means starting the service unit is sufficient — systemd starts the volume units first automatically.
+
+== Step 4 — Watch the startup
+
+Neo4j takes up to five minutes to initialise on first run.
+Watch the log output:
+
+[source,bash]
+----
+journalctl --user -fu neo4j.service
+----
+
+You are waiting for a line like:
+
+----
+Started.
+----
+
+Once that appears the container health check will flip to `healthy` within 30 seconds.
+
+Check the container state:
+
+[source,bash]
+----
+podman ps --filter name=systemd-neo4j --format "{{.Names}}\t{{.Status}}"
+----
+
+You should see `(healthy)` in the status column.
+
+== Step 5 — Open the browser UI
+
+Navigate to `http://localhost:7474` in a browser.
+
+Log in with username `neo4j` and the password you set in the secret (`changeme` in the example above).
+
+Create a test node to confirm writes work:
+
+[source,cypher]
+----
+CREATE (:Person {name: "Alice"}) RETURN "done"
+----
+
+== Step 6 — Connect with a Bolt client
+
+Any Neo4j driver or tool that supports Bolt can connect to `bolt://localhost:7687` with the same credentials.
+
+Example using `cypher-shell` if installed:
+
+[source,bash]
+----
+cypher-shell -a bolt://localhost:7687 -u neo4j -p changeme "MATCH (n) RETURN count(n)"
+----
+
+== Step 7 — Stop and persist
+
+Stop the service when you are done:
+
+[source,bash]
+----
+systemctl --user stop neo4j.service
+----
+
+The data in the named volumes (`neo4j-data`, `neo4j-logs`, `neo4j-plugins`) persists across restarts.
+When you start the service again Neo4j picks up exactly where it left off.
+
+Confirm the volumes still exist:
+
+[source,bash]
+----
+podman volume ls | grep neo4j
+----
+
+== What you learned
+
+* `.dotter/local.toml` controls which databases dotter symlinks into `~/.config/containers/systemd/`; only `neo4j` is enabled by default.
+* `pixi run install` runs `dotter deploy` and `daemon-reload`; `pixi run start` starts the enabled services.
+* Secrets decouple credentials from the quadlet files themselves.
+* Volume quadlets declare named volumes that persist independently of the container lifecycle.
+* The `Wants=` and `After=` ordering in `.container` files means you can start just the service unit; systemd starts the volumes first automatically.
+
+Next: see xref:multi-container-setup.adoc[Multi-container setup: Aerospike Graph] to learn how the two-container arrangement differs.

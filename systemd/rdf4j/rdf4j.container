@@ -1,0 +1,25 @@
+[Unit]
+Description=Eclipse RDF4J Workbench — RDF database and SPARQL endpoint
+Documentation=https://hub.docker.com/r/eclipse/rdf4j-workbench
+Wants=network-online.target rdf4j-data-volume.service
+After=network-online.target rdf4j-data-volume.service
+
+[Container]
+AutoUpdate=registry
+Image=docker.io/eclipse/rdf4j-workbench:latest
+ContainerName=systemd-rdf4j
+PublishPort=8080:8080
+Volume=rdf4j-data:/var/rdf4j/server
+HealthCmd=["curl","-sf","http://localhost:8080/rdf4j-workbench"]
+HealthInterval=30s
+HealthRetries=3
+HealthStartPeriod=60s
+HealthTimeout=10s
+Label=app=rdf4j
+
+[Service]
+Restart=always
+TimeoutStartSec=120
+
+[Install]
+WantedBy=multi-user.target default.target

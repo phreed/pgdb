@@ -1,0 +1,29 @@
+# dotter local configuration
+# List the packages from global.toml to deploy on this machine.
+# Comment out any database you do not want symlinked.
+
+packages = [
+    # "aerospike-graph",
+    # "allegro-graph",
+    # "apache-age",
+    # "arcade-db",
+    # "blazegraph",
+    # "datastax-graph",
+    # "dgraph",
+    # "falkordb",
+    # "graphdb",
+    # "gremlin-server",
+    # "hugegraph",
+    # "janusgraph",
+    "jena-fuseki",
+    # "memgraph",
+    "neo4j",
+    # "oracle-graph",
+    # "puppygraph",
+    # "qlever",
+    # "rdf4j",
+    # "rdfox",
+    # "stardog",
+    # "tentris",
+    # "ultipa",
+]

@@ -1,0 +1,31 @@
+[Unit]
+Description=JanusGraph — distributed, scalable graph database
+Documentation=https://hub.docker.com/r/janusgraph/janusgraph
+Wants=network-online.target janusgraph-data-volume.service
+After=network-online.target janusgraph-data-volume.service
+
+[Container]
+AutoUpdate=registry
+Image=docker.io/janusgraph/janusgraph:latest
+ContainerName=systemd-janusgraph
+PublishPort=8182:8182
+PublishPort=8183:8183
+Volume=janusgraph-data:/var/lib/janusgraph
+# Uses BerkeleyDB + Lucene backends for a fully self-contained instance
+Environment=janusgraph.storage.backend=berkeleyje
+Environment=janusgraph.storage.directory=/var/lib/janusgraph/data
+Environment=janusgraph.index.search.backend=lucene
+Environment=janusgraph.index.search.directory=/var/lib/janusgraph/index
+HealthCmd=["curl","-sf","http://localhost:8182/gremlin"]
+HealthInterval=30s
+HealthRetries=5
+HealthStartPeriod=90s
+HealthTimeout=10s
+Label=app=janusgraph
+
+[Service]
+Restart=always
+TimeoutStartSec=180
+
+[Install]
+WantedBy=multi-user.target default.target

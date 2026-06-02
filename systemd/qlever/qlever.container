@@ -1,0 +1,27 @@
+[Unit]
+Description=QLever — fast SPARQL engine for large RDF datasets
+Documentation=https://hub.docker.com/r/adfreiburg/qlever
+Wants=network-online.target qlever-data-volume.service
+After=network-online.target qlever-data-volume.service
+
+[Container]
+AutoUpdate=registry
+Image=docker.io/adfreiburg/qlever:latest
+ContainerName=systemd-qlever
+PublishPort=7001:7001
+Volume=qlever-data:/index
+# QLever serves a pre-built index; mount a built index at /index before starting
+# Build an index first with: podman run --rm -v qlever-data:/index adfreiburg/qlever -i /index <ttl-file>
+HealthCmd=["curl","-sf","http://localhost:7001/?query=SELECT+*+WHERE%7B%7D&action=tsv_export"]
+HealthInterval=30s
+HealthRetries=3
+HealthStartPeriod=30s
+HealthTimeout=10s
+Label=app=qlever
+
+[Service]
+Restart=always
+TimeoutStartSec=120
+
+[Install]
+WantedBy=multi-user.target default.target

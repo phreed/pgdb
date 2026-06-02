@@ -1,0 +1,24 @@
+[Unit]
+Description=Aerospike Server (backend for Aerospike Graph)
+Documentation=https://hub.docker.com/r/aerospike/aerospike-server
+Wants=network-online.target aerospike-graph.network aerospike-graph-data-volume.service
+After=network-online.target aerospike-graph.network aerospike-graph-data-volume.service
+
+[Container]
+AutoUpdate=registry
+Image=docker.io/aerospike/aerospike-server:latest
+ContainerName=systemd-aerospike-server
+Network=aerospike-graph.network
+PublishPort=3000:3000
+PublishPort=3001:3001
+PublishPort=3002:3002
+Volume=aerospike-graph-data:/opt/aerospike/data
+Label=app=aerospike-graph
+Label=component=server
+
+[Service]
+Restart=always
+TimeoutStartSec=120
+
+[Install]
+WantedBy=multi-user.target default.target

@@ -1,0 +1,26 @@
+[Unit]
+Description=PuppyGraph — query relational data as a graph without ETL
+Documentation=https://docs.puppygraph.com/getting-started/docker
+Wants=network-online.target
+After=network-online.target
+
+[Container]
+AutoUpdate=registry
+Image=docker.io/puppygraph/puppygraph:stable
+ContainerName=systemd-puppygraph
+PublishPort=8081:8081
+PublishPort=8182:8182
+PublishPort=7687:7687
+HealthCmd=["curl","-sf","http://localhost:8081/status"]
+HealthInterval=30s
+HealthRetries=3
+HealthStartPeriod=60s
+HealthTimeout=10s
+Label=app=puppygraph
+
+[Service]
+Restart=always
+TimeoutStartSec=120
+
+[Install]
+WantedBy=multi-user.target default.target

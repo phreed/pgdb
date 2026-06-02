@@ -1,0 +1,8 @@
+[Unit]
+Description=JanusGraph data volume
+
+[Volume]
+VolumeName=janusgraph-data
+
+[Install]
+WantedBy=multi-user.target default.target

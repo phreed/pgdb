@@ -1,0 +1,195 @@
+= Graph database categories
+:toc: left
+:toclevels: 2
+:sectanchors:
+:sectlinks:
+:icons: font
+
+The 23 databases in this collection are not interchangeable.
+They differ fundamentally in data model, query language, and intended workload.
+This page groups them by category to help you choose the right one.
+
+For per-database connection details, see xref:../reference/database-inventory.adoc[Database inventory].
+
+== Property graph databases
+
+A property graph stores nodes and edges, both of which can carry key-value properties.
+There is no global schema enforced by the database; you define your own node labels and relationship types.
+
+The dominant query language for property graphs is *Cypher* (openCypher).
+*Gremlin* is an alternative graph traversal language that works at a lower level of abstraction.
+
+[cols="<2,<2,<4",options="header"]
+|===
+| Database | Primary language | Notes
+
+| xref:../reference/database-inventory.adoc#_neo4j[Neo4j]
+| Cypher
+| The most widely deployed property graph engine.
+  Browser UI at port 7474.
+
+| xref:../reference/database-inventory.adoc#_memgraph[Memgraph]
+| openCypher
+| In-memory, Bolt protocol, optimised for real-time streaming graphs.
+
+| xref:../reference/database-inventory.adoc#_falkordb[FalkorDB]
+| Cypher (GRAPH commands)
+| Built on Redis Modules.
+  Uses the RESP protocol; any Redis client works.
+
+| xref:../reference/database-inventory.adoc#_dgraph[Dgraph]
+| DQL (GraphQL-like) / GraphQL
+| Distributed, natively supports GraphQL schema.
+
+| xref:../reference/database-inventory.adoc#_janusgraph[JanusGraph]
+| Gremlin
+| Designed for very large graphs; can use external storage backends (HBase, Cassandra, BerkeleyDB).
+
+| xref:../reference/database-inventory.adoc#_gremlin_server[Gremlin Server]
+| Gremlin
+| Reference implementation of the TinkerPop stack.
+  Ships with an in-memory TinkerGraph; real backends are plugged in.
+
+| xref:../reference/database-inventory.adoc#_hugegraph[HugeGraph]
+| Gremlin + REST
+| TinkerPop-compatible, designed for large-scale graphs.
+
+| xref:../reference/database-inventory.adoc#_puppygraph[PuppyGraph]
+| Gremlin / Bolt
+| Does not store graph data itself; translates graph queries into SQL against external relational databases.
+|===
+
+== RDF / triplestore / SPARQL databases
+
+RDF (Resource Description Framework) represents data as subject-predicate-object triples.
+Every node and edge is identified by a URI.
+The query language is *SPARQL*.
+
+RDF databases are the natural home for semantic web data, ontologies (OWL/RDFS), linked data, and knowledge graphs that need to span institutional or organisational boundaries.
+
+[cols="<2,<6",options="header"]
+|===
+| Database | Notes
+
+| xref:../reference/database-inventory.adoc#_allegro_graph[AllegroGraph]
+| Supports SPARQL, Prolog, and a custom REST API.
+  Strong OWL reasoning.
+
+| xref:../reference/database-inventory.adoc#_blazegraph[Blazegraph]
+| High-performance SPARQL 1.1.
+  Powers the Wikidata Query Service.
+  Community-maintained.
+
+| xref:../reference/database-inventory.adoc#_graphdb[GraphDB]
+| Enterprise-grade RDF store with SPARQL, OWL reasoning, and connectors for Elasticsearch and Solr.
+
+| xref:../reference/database-inventory.adoc#_jena_fuseki[Jena Fuseki]
+| The reference SPARQL server from the Apache Jena project.
+  Paired with Jena's in-memory or TDB persistent backend.
+
+| xref:../reference/database-inventory.adoc#_rdf4j[Eclipse RDF4J]
+| Java-based RDF framework and SPARQL server;
+  the Workbench image includes a web UI.
+
+| xref:../reference/database-inventory.adoc#_rdfox[RDFox]
+| In-memory, extremely fast Datalog-based reasoning over RDF.
+  Requires a commercial license.
+
+| xref:../reference/database-inventory.adoc#_stardog[Stardog]
+| Enterprise knowledge graph platform: SPARQL, GraphQL, SMS (Stardog Mapping Syntax), OWL reasoning.
+
+| xref:../reference/database-inventory.adoc#_tentris[Tentris]
+| Tensor-based RDF store from the DICE group at Paderborn University.
+  Research-oriented, high-performance SPARQL evaluation.
+
+| xref:../reference/database-inventory.adoc#_qlever[QLever]
+| Very fast SPARQL over large datasets (Wikidata, DBpedia scale).
+  Requires pre-building an index from RDF files before serving queries.
+|===
+
+== Multi-model databases
+
+Multi-model databases support more than one data model in the same engine.
+You can store graph data, documents, and other structures together and query across them.
+
+[cols="<2,<2,<4",options="header"]
+|===
+| Database | Models | Notes
+
+| xref:../reference/database-inventory.adoc#_arcade_db[ArcadeDB]
+| Property graph, document, key-value, time-series
+| Supports Cypher, Gremlin, SQL, and MongoDB API simultaneously on the same data.
+
+| xref:../reference/database-inventory.adoc#_apache_age[Apache AGE]
+| Property graph + relational
+| A PostgreSQL extension.
+  Stores graphs in Postgres tables; queries use SQL + openCypher mixed in a single statement.
+  Your existing Postgres infrastructure, tools, and backups work unchanged.
+|===
+
+== Distributed / wide-column backends
+
+These databases use a distributed key-value or wide-column store as their primary engine and add a graph layer on top.
+
+[cols="<2,<2,<4",options="header"]
+|===
+| Database | Backend | Notes
+
+| xref:../reference/database-inventory.adoc#_aerospike_graph[Aerospike Graph]
+| Aerospike Server
+| The graph service is a Gremlin traversal layer.
+  Aerospike provides the scalable, persistent KV store.
+  See xref:../tutorials/multi-container-setup.adoc[Multi-container setup tutorial].
+
+| xref:../reference/database-inventory.adoc#_datastax_graph[DataStax Enterprise Graph]
+| Cassandra (DSE)
+| DSE Graph is a TinkerPop/Gremlin interface over Cassandra.
+  The `-g` flag in the quadlet enables it.
+
+| xref:../reference/database-inventory.adoc#_janusgraph[JanusGraph]
+| BerkeleyDB (in this quadlet)
+| Can also back onto HBase, Cassandra, or ScyllaDB for production deployments.
+|===
+
+== Enterprise / commercial databases
+
+These databases have free community editions or developer trial licenses but are primarily commercial products.
+
+[cols="<2,<2,<3",options="header"]
+|===
+| Database | License requirement | Setup guide
+
+| xref:../reference/database-inventory.adoc#_allegro_graph[AllegroGraph]
+| Free edition available via Docker Hub
+| —
+
+| xref:../reference/database-inventory.adoc#_oracle_graph[Oracle Graph]
+| Free Oracle account + registry login
+| xref:../how-to/configure-license-databases.adoc#_oracle_graph_server[Oracle Graph setup]
+
+| xref:../reference/database-inventory.adoc#_rdfox[RDFox]
+| Commercial license from Oxford Semantic Technologies
+| xref:../how-to/configure-license-databases.adoc#_rdfox_2[RDFox setup]
+
+| xref:../reference/database-inventory.adoc#_stardog[Stardog]
+| Developer license available; image is free
+| xref:../how-to/configure-license-databases.adoc#_stardog_2[Stardog setup]
+
+| xref:../reference/database-inventory.adoc#_ultipa[Ultipa Graph]
+| Enterprise; contact vendor
+| —
+|===
+
+== Choosing between categories
+
+Use a *property graph*::
+  When your data is naturally modelled as a network of typed entities and relationships, and your queries traverse that network (shortest paths, recommendations, fraud rings, access control graphs).
+
+Use an *RDF triplestore*::
+  When you need to integrate data from multiple sources with different schemas, publish linked data, apply OWL ontologies, or run federated SPARQL queries across external endpoints.
+
+Use a *multi-model database* (ArcadeDB, Apache AGE)::
+  When you need to avoid committing to a single query paradigm, or when you want to add graph queries to an existing PostgreSQL deployment without migrating data.
+
+Use a *distributed backend* (JanusGraph, Aerospike Graph, DataStax Graph)::
+  When your graph has hundreds of millions or billions of edges and a single-machine store will not scale.

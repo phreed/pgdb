@@ -1,0 +1,27 @@
+[Unit]
+Description=Oracle Graph Server — property graph analytics server
+Documentation=https://container-registry.oracle.com/ords/ocr/ba/database/graph-server-client-lite
+Wants=network-online.target oracle-graph-data-volume.service
+After=network-online.target oracle-graph-data-volume.service
+
+[Container]
+AutoUpdate=registry
+# Requires free Oracle account and license acceptance at container-registry.oracle.com
+# Run: podman login container-registry.oracle.com
+Image=container-registry.oracle.com/database/graph-server-client-lite:latest
+ContainerName=systemd-oracle-graph
+PublishPort=7007:7007
+Volume=oracle-graph-data:/etc/oracle/graph/pgx
+HealthCmd=["curl","-sf","https://localhost:7007/ui"]
+HealthInterval=30s
+HealthRetries=3
+HealthStartPeriod=90s
+HealthTimeout=10s
+Label=app=oracle-graph
+
+[Service]
+Restart=always
+TimeoutStartSec=180
+
+[Install]
+WantedBy=multi-user.target default.target

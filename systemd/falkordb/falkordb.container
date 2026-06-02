@@ -1,0 +1,26 @@
+[Unit]
+Description=FalkorDB — graph database built on Redis Modules
+Documentation=https://hub.docker.com/r/falkordb/falkordb
+Wants=network-online.target falkordb-data-volume.service
+After=network-online.target falkordb-data-volume.service
+
+[Container]
+AutoUpdate=registry
+Image=docker.io/falkordb/falkordb:latest
+ContainerName=systemd-falkordb
+PublishPort=6379:6379
+PublishPort=3000:3000
+Volume=falkordb-data:/data
+HealthCmd=["redis-cli","ping"]
+HealthInterval=30s
+HealthRetries=3
+HealthStartPeriod=30s
+HealthTimeout=10s
+Label=app=falkordb
+
+[Service]
+Restart=always
+TimeoutStartSec=60
+
+[Install]
+WantedBy=multi-user.target default.target

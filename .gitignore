@@ -1,0 +1,7 @@
+# pixi environments
+.pixi/*
+!.pixi/config.toml
+
+# Secrets file — ignored by default to prevent accidental unencrypted commits.
+# When git-crypt is configured, force-add with: git add -f podman.secret.toml
+*.secret.toml

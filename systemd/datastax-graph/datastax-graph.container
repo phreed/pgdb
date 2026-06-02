@@ -1,0 +1,30 @@
+[Unit]
+Description=DataStax Enterprise Graph — graph analytics on Cassandra
+Documentation=https://hub.docker.com/r/datastax/dse-server
+Wants=network-online.target datastax-graph-data-volume.service
+After=network-online.target datastax-graph-data-volume.service
+
+[Container]
+AutoUpdate=registry
+Image=docker.io/datastax/dse-server:6.8.49
+ContainerName=systemd-datastax-graph
+PublishPort=9042:9042
+PublishPort=8182:8182
+Volume=datastax-graph-data:/var/lib/cassandra
+# Accept DataStax Enterprise license
+Environment=DS_LICENSE=accept
+# Enable DSE Graph
+Exec=-g
+HealthCmd=["cqlsh","-e","EXIT"]
+HealthInterval=30s
+HealthRetries=5
+HealthStartPeriod=120s
+HealthTimeout=20s
+Label=app=datastax-graph
+
+[Service]
+Restart=always
+TimeoutStartSec=300
+
+[Install]
+WantedBy=multi-user.target default.target

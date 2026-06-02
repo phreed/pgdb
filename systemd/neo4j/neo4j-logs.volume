@@ -1,0 +1,8 @@
+[Unit]
+Description=Neo4j logs volume
+
+[Volume]
+VolumeName=neo4j-logs
+
+[Install]
+WantedBy=multi-user.target default.target

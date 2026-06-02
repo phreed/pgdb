@@ -1,0 +1,25 @@
+[Unit]
+Description=Apache HugeGraph — distributed graph database for large-scale data
+Documentation=https://hub.docker.com/r/apache/hugegraph
+Wants=network-online.target hugegraph-data-volume.service
+After=network-online.target hugegraph-data-volume.service
+
+[Container]
+AutoUpdate=registry
+Image=docker.io/apache/hugegraph:latest
+ContainerName=systemd-hugegraph
+PublishPort=8080:8080
+Volume=hugegraph-data:/hugegraph/hugegraph-server/data
+HealthCmd=["curl","-sf","http://localhost:8080/apis"]
+HealthInterval=30s
+HealthRetries=3
+HealthStartPeriod=60s
+HealthTimeout=10s
+Label=app=hugegraph
+
+[Service]
+Restart=always
+TimeoutStartSec=120
+
+[Install]
+WantedBy=multi-user.target default.target

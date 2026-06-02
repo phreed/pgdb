@@ -1,0 +1,8 @@
+[Unit]
+Description=Oracle Graph Server data volume
+
+[Volume]
+VolumeName=oracle-graph-data
+
+[Install]
+WantedBy=multi-user.target default.target

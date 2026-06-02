@@ -1,0 +1,9 @@
+[symlinks]
+"systemd/jena-fuseki/jena-fuseki-data.volume" = "/var/home/phreed/.config/containers/systemd/pgdb/jena-fuseki/jena-fuseki-data.volume"
+"systemd/jena-fuseki/jena-fuseki.container" = "/var/home/phreed/.config/containers/systemd/pgdb/jena-fuseki/jena-fuseki.container"
+"systemd/neo4j/neo4j-data.volume" = "/var/home/phreed/.config/containers/systemd/pgdb/neo4j/neo4j-data.volume"
+"systemd/neo4j/neo4j-logs.volume" = "/var/home/phreed/.config/containers/systemd/pgdb/neo4j/neo4j-logs.volume"
+"systemd/neo4j/neo4j-plugins.volume" = "/var/home/phreed/.config/containers/systemd/pgdb/neo4j/neo4j-plugins.volume"
+"systemd/neo4j/neo4j.container" = "/var/home/phreed/.config/containers/systemd/pgdb/neo4j/neo4j.container"
+
+[templates]

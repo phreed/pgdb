@@ -1,0 +1,98 @@
+# dotter global configuration
+# Source paths are relative to the project root (where dotter is invoked).
+# Target paths are the symlink destinations in the user systemd directory.
+
+[aerospike-graph.files]
+"systemd/aerospike-graph/aerospike-graph.network"      = "~/.config/containers/systemd/pgdb/aerospike-graph/aerospike-graph.network"
+"systemd/aerospike-graph/aerospike-server.container"   = "~/.config/containers/systemd/pgdb/aerospike-graph/aerospike-server.container"
+"systemd/aerospike-graph/aerospike-graph.container"    = "~/.config/containers/systemd/pgdb/aerospike-graph/aerospike-graph.container"
+"systemd/aerospike-graph/aerospike-graph-data.volume"  = "~/.config/containers/systemd/pgdb/aerospike-graph/aerospike-graph-data.volume"
+
+[allegro-graph.files]
+"systemd/allegro-graph/allegro-graph.container"        = "~/.config/containers/systemd/pgdb/allegro-graph/allegro-graph.container"
+"systemd/allegro-graph/allegro-graph-data.volume"      = "~/.config/containers/systemd/pgdb/allegro-graph/allegro-graph-data.volume"
+
+[apache-age.files]
+"systemd/apache-age/apache-age.container"              = "~/.config/containers/systemd/pgdb/apache-age/apache-age.container"
+"systemd/apache-age/apache-age-data.volume"            = "~/.config/containers/systemd/pgdb/apache-age/apache-age-data.volume"
+
+[arcade-db.files]
+"systemd/arcade-db/arcade-db.container"                = "~/.config/containers/systemd/pgdb/arcade-db/arcade-db.container"
+"systemd/arcade-db/arcade-db-data.volume"              = "~/.config/containers/systemd/pgdb/arcade-db/arcade-db-data.volume"
+
+[blazegraph.files]
+"systemd/blazegraph/blazegraph.container"              = "~/.config/containers/systemd/pgdb/blazegraph/blazegraph.container"
+"systemd/blazegraph/blazegraph-data.volume"            = "~/.config/containers/systemd/pgdb/blazegraph/blazegraph-data.volume"
+
+[datastax-graph.files]
+"systemd/datastax-graph/datastax-graph.container"      = "~/.config/containers/systemd/pgdb/datastax-graph/datastax-graph.container"
+"systemd/datastax-graph/datastax-graph-data.volume"    = "~/.config/containers/systemd/pgdb/datastax-graph/datastax-graph-data.volume"
+
+[dgraph.files]
+"systemd/dgraph/dgraph.container"                      = "~/.config/containers/systemd/pgdb/dgraph/dgraph.container"
+"systemd/dgraph/dgraph-data.volume"                    = "~/.config/containers/systemd/pgdb/dgraph/dgraph-data.volume"
+
+[falkordb.files]
+"systemd/falkordb/falkordb.container"                  = "~/.config/containers/systemd/pgdb/falkordb/falkordb.container"
+"systemd/falkordb/falkordb-data.volume"                = "~/.config/containers/systemd/pgdb/falkordb/falkordb-data.volume"
+
+[graphdb.files]
+"systemd/graphdb/graphdb.container"                    = "~/.config/containers/systemd/pgdb/graphdb/graphdb.container"
+"systemd/graphdb/graphdb-data.volume"                  = "~/.config/containers/systemd/pgdb/graphdb/graphdb-data.volume"
+
+[gremlin-server.files]
+"systemd/gremlin-server/gremlin-server.container"      = "~/.config/containers/systemd/pgdb/gremlin-server/gremlin-server.container"
+
+[hugegraph.files]
+"systemd/hugegraph/hugegraph.container"                = "~/.config/containers/systemd/pgdb/hugegraph/hugegraph.container"
+"systemd/hugegraph/hugegraph-data.volume"              = "~/.config/containers/systemd/pgdb/hugegraph/hugegraph-data.volume"
+
+[janusgraph.files]
+"systemd/janusgraph/janusgraph.container"              = "~/.config/containers/systemd/pgdb/janusgraph/janusgraph.container"
+"systemd/janusgraph/janusgraph-data.volume"            = "~/.config/containers/systemd/pgdb/janusgraph/janusgraph-data.volume"
+
+[jena-fuseki.files]
+"systemd/jena-fuseki/jena-fuseki.container"            = "~/.config/containers/systemd/pgdb/jena-fuseki/jena-fuseki.container"
+"systemd/jena-fuseki/jena-fuseki-data.volume"          = "~/.config/containers/systemd/pgdb/jena-fuseki/jena-fuseki-data.volume"
+
+[memgraph.files]
+"systemd/memgraph/memgraph.container"                  = "~/.config/containers/systemd/pgdb/memgraph/memgraph.container"
+"systemd/memgraph/memgraph-data.volume"                = "~/.config/containers/systemd/pgdb/memgraph/memgraph-data.volume"
+"systemd/memgraph/memgraph-log.volume"                 = "~/.config/containers/systemd/pgdb/memgraph/memgraph-log.volume"
+
+[neo4j.files]
+"systemd/neo4j/neo4j.container"                        = "~/.config/containers/systemd/pgdb/neo4j/neo4j.container"
+"systemd/neo4j/neo4j-data.volume"                      = "~/.config/containers/systemd/pgdb/neo4j/neo4j-data.volume"
+"systemd/neo4j/neo4j-logs.volume"                      = "~/.config/containers/systemd/pgdb/neo4j/neo4j-logs.volume"
+"systemd/neo4j/neo4j-plugins.volume"                   = "~/.config/containers/systemd/pgdb/neo4j/neo4j-plugins.volume"
+
+[oracle-graph.files]
+"systemd/oracle-graph/oracle-graph.container"          = "~/.config/containers/systemd/pgdb/oracle-graph/oracle-graph.container"
+"systemd/oracle-graph/oracle-graph-data.volume"        = "~/.config/containers/systemd/pgdb/oracle-graph/oracle-graph-data.volume"
+
+[puppygraph.files]
+"systemd/puppygraph/puppygraph.container"              = "~/.config/containers/systemd/pgdb/puppygraph/puppygraph.container"
+
+[qlever.files]
+"systemd/qlever/qlever.container"                      = "~/.config/containers/systemd/pgdb/qlever/qlever.container"
+"systemd/qlever/qlever-data.volume"                    = "~/.config/containers/systemd/pgdb/qlever/qlever-data.volume"
+
+[rdf4j.files]
+"systemd/rdf4j/rdf4j.container"                        = "~/.config/containers/systemd/pgdb/rdf4j/rdf4j.container"
+"systemd/rdf4j/rdf4j-data.volume"                      = "~/.config/containers/systemd/pgdb/rdf4j/rdf4j-data.volume"
+
+[rdfox.files]
+"systemd/rdfox/rdfox.container"                        = "~/.config/containers/systemd/pgdb/rdfox/rdfox.container"
+"systemd/rdfox/rdfox-data.volume"                      = "~/.config/containers/systemd/pgdb/rdfox/rdfox-data.volume"
+
+[stardog.files]
+"systemd/stardog/stardog.container"                    = "~/.config/containers/systemd/pgdb/stardog/stardog.container"
+"systemd/stardog/stardog-data.volume"                  = "~/.config/containers/systemd/pgdb/stardog/stardog-data.volume"
+
+[tentris.files]
+"systemd/tentris/tentris.container"                    = "~/.config/containers/systemd/pgdb/tentris/tentris.container"
+"systemd/tentris/tentris-data.volume"                  = "~/.config/containers/systemd/pgdb/tentris/tentris-data.volume"
+
+[ultipa.files]
+"systemd/ultipa/ultipa.container"                      = "~/.config/containers/systemd/pgdb/ultipa/ultipa.container"
+"systemd/ultipa/ultipa-data.volume"                    = "~/.config/containers/systemd/pgdb/ultipa/ultipa-data.volume"

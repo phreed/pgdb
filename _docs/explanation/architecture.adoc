@@ -1,0 +1,169 @@
+= How the activation pipeline works
+:toc: left
+:toclevels: 2
+:sectanchors:
+:sectlinks:
+:icons: font
+
+A quadlet file goes through several transformation steps before it becomes a running container.
+Understanding this pipeline makes it easier to diagnose failures and reason about what each file actually does.
+
+== The pipeline
+
+----
+Repository source files
+        │
+        │  dotter deploy  (reads .dotter/global.toml + .dotter/local.toml)
+        ▼
+~/.config/containers/systemd/pgdb/<database>/
+        │
+        │  systemctl --user daemon-reload
+        │  (triggers Podman quadlet generator)
+        ▼
+~/.config/systemd/user/  (generated .service files)
+        │
+        │  systemctl --user start <name>.service
+        ▼
+Running Podman container
+----
+
+== Step 1 — The source files
+
+The repository holds the authoritative definitions.
+Each database directory contains:
+
+* `<name>.container` — the container unit definition
+* `<name>-data.volume` — declares a named Podman volume
+
+No files are modified in place by systemd.
+The repository stays clean.
+
+== Step 2 — Symlinking via dotter
+
+`.dotter/global.toml` defines one package per database, mapping source paths (relative to the project root) to symlink targets:
+
+[source,toml]
+----
+[neo4j.files]
+"systemd/neo4j/neo4j.container"      = "~/.config/containers/systemd/pgdb/neo4j/neo4j.container"
+"systemd/neo4j/neo4j-data.volume"    = "~/.config/containers/systemd/pgdb/neo4j/neo4j-data.volume"
+"systemd/neo4j/neo4j-logs.volume"    = "~/.config/containers/systemd/pgdb/neo4j/neo4j-logs.volume"
+"systemd/neo4j/neo4j-plugins.volume" = "~/.config/containers/systemd/pgdb/neo4j/neo4j-plugins.volume"
+----
+
+`.dotter/local.toml` lists which packages to deploy on this machine.
+Only `neo4j` is enabled by default; all others are commented out:
+
+[source,toml]
+----
+packages = [
+    # "allegro-graph",
+    "neo4j",
+    # "stardog",
+    # ...
+]
+----
+
+Running `dotter deploy` (via `pixi run install`) reads both files from `.dotter/`, creates the target directories, and writes the symlinks.
+The systemd quadlet generator only reads the live target directory; it does not know or care whether the files there are symlinks or regular files.
+
+See xref:../how-to/activate-a-quadlet.adoc[Activate a quadlet] for the full procedure.
+
+== Step 3 — The quadlet generator
+
+When you run `systemctl --user daemon-reload`, systemd invokes the Podman quadlet generator:
+
+----
+/usr/lib/systemd/user-generators/podman-user-generator
+----
+
+This generator scans `~/.config/containers/systemd/` for `.container`, `.volume`, and `.network` files and produces standard `.service` unit files in `~/.config/systemd/user/`.
+Inspect the generated files:
+
+[source,bash]
+----
+ls ~/.config/systemd/user/ | grep neo4j
+----
+
+Expected output:
+
+----
+neo4j.service
+neo4j-data-volume.service
+neo4j-logs-volume.service
+neo4j-plugins-volume.service
+----
+
+The generated service file for a `.container` quadlet wraps a `podman run` command.
+The generated service file for a `.volume` quadlet wraps `podman volume create`.
+
+== Step 4 — Systemd unit activation
+
+The generated units participate in the normal systemd unit graph.
+The `Wants=` and `After=` directives in the `.container` file become identical directives in the generated `.service` file.
+
+When you run `systemctl --user start neo4j.service`, systemd:
+
+. Resolves `Wants=neo4j-data-volume.service neo4j-logs-volume.service neo4j-plugins-volume.service`
+. Starts the three volume services first (each runs `podman volume create`)
+. Starts `neo4j.service` (runs `podman run ... docker.io/neo4j:latest`)
+. Monitors the container and enforces `Restart=always`
+
+== Step 5 — Health checks
+
+Health checks are managed by Podman, not systemd.
+The `HealthCmd=` / `HealthInterval=` / `HealthRetries=` fields in the `.container` file are passed as `--health-cmd` / `--health-interval` / `--health-retries` flags to `podman run`.
+
+Podman runs the health command inside the container on the configured interval.
+The result is stored in the container state but does *not* affect the systemd service state.
+An unhealthy container continues running; systemd does not restart it based on health check results alone.
+
+[source,bash]
+----
+podman inspect <name> --format '{{json .State.Health}}'
+----
+
+NOTE: Use `HealthStartPeriod=` to give slow-starting databases (Neo4j: 60 s, JanusGraph: 90 s, DataStax: 120 s) time to initialise before health check failures are recorded.
+
+See xref:../how-to/check-health.adoc[Check database health] for diagnostic commands.
+
+== Volume lifecycle
+
+Named volumes declared in `.volume` quadlet files exist independently of the container.
+The `podman volume create` command that the generated volume service runs is idempotent: if the volume already exists, nothing changes.
+
+Volumes survive container removal, image updates, and service restarts.
+To wipe a database and start fresh:
+
+[source,bash]
+----
+systemctl --user stop <name>.service
+podman volume rm <name>-data
+systemctl --user start <name>.service
+----
+
+== Secret injection
+
+Secrets created with `podman secret create` are stored encrypted under `~/.local/share/containers/storage/secrets/`.
+When the container starts, Podman reads the secret from storage and injects it as the target environment variable.
+The secret value never appears in the generated unit file, in `podman inspect`, or in `journalctl` output.
+
+See xref:../reference/secrets.adoc[Secrets reference] for the full list.
+
+== AutoUpdate mechanism
+
+`AutoUpdate=registry` causes the generated service file to include a `podman-auto-update` label.
+When the `podman-auto-update.timer` fires (default: daily), Podman:
+
+. Queries the registry for the current digest of the image tag.
+. Compares to the locally pulled digest.
+. If different: pulls the new image, then restarts the systemd service via `systemctl --user restart`.
+
+Observe it in action:
+
+[source,bash]
+----
+journalctl --user -u podman-auto-update.service
+----
+
+See xref:../how-to/update-images.adoc[Update container images] for manual update procedures.

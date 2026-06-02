@@ -1,0 +1,346 @@
+= Database inventory
+:toc: left
+:toclevels: 2
+:sectanchors:
+:sectlinks:
+:icons: font
+
+Complete reference for all 23 graph database quadlets.
+Databases are listed alphabetically by directory name.
+
+== aerospike-graph
+
+Multi-container setup.
+Two services and one network are required.
+See xref:../tutorials/multi-container-setup.adoc[Multi-container setup tutorial].
+
+[cols="<2,<5",frame=none,grid=rows]
+|===
+| Directory | `aerospike-graph/`
+| Services | `aerospike-server.service`, `aerospike-graph.service`
+| Network | `aerospike-graph.network` (bridge)
+| Images | `docker.io/aerospike/aerospike-server:latest` (backend)
+          `docker.io/aerospike/aerospike-graph-service:latest` (frontend)
+| Ports | 3000–3002 (Aerospike internal), 8182 (Gremlin WebSocket)
+| Volume | `aerospike-graph-data` → `/opt/aerospike/data`
+| Environment | `aerospike.client.host=aerospike-server`, `aerospike.client.port=3000`
+| Secrets | None
+| Protocol | Gremlin over WebSocket
+|===
+
+== allegro-graph
+
+[cols="<2,<5",frame=none,grid=rows]
+|===
+| Directory | `allegro-graph/`
+| Image | `docker.io/franzinc/agraph:latest`
+| Port | 10035 (HTTP REST + WebSocket)
+| Volume | `allegro-graph-data` → `/agraph/data`
+| Environment | `AGRAPH_SUPER_USER=admin`
+| Secrets | `allegro-graph-password` → `AGRAPH_SUPER_PASSWORD`
+| Protocol | SPARQL 1.1, Prolog, REST, WebSocket
+|===
+
+== apache-age
+
+PostgreSQL with the Apache AGE graph extension baked in.
+
+[cols="<2,<5",frame=none,grid=rows]
+|===
+| Directory | `apache-age/`
+| Image | `docker.io/apache/age:latest`
+| Port | 5432 (PostgreSQL)
+| Volume | `apache-age-data` → `/var/lib/postgresql/data`
+| Environment | `POSTGRES_USER=age_user`, `POSTGRES_DB=age_db`
+| Secrets | `apache-age-password` → `POSTGRES_PASSWORD`
+| Protocol | PostgreSQL wire protocol, SQL + openCypher via AGE
+| Health check | `pg_isready -U age_user -d age_db`
+|===
+
+== arcade-db
+
+[cols="<2,<5",frame=none,grid=rows]
+|===
+| Directory | `arcade-db/`
+| Image | `docker.io/arcadedb/arcadedb:latest`
+| Ports | 2480 (HTTP API), 2424 (binary), 8182 (Gremlin)
+| Volume | `arcade-db-data` → `/home/arcadedb/databases`
+| Environment | `arcadedb.server.defaultDatabases=GratefulDeadConcerts[admin:admin]`
+| Secrets | `arcade-db-root-password` → `arcadedb.server.rootPassword`
+| Protocol | HTTP/JSON, Gremlin, openCypher, SQL, MongoDB
+|===
+
+== blazegraph
+
+[cols="<2,<5",frame=none,grid=rows]
+|===
+| Directory | `blazegraph/`
+| Image | `docker.io/lyrasis/blazegraph:latest`
+| Port | 9999 (maps to internal 8080)
+| Volume | `blazegraph-data` → `/data`
+| Secrets | None
+| Protocol | SPARQL 1.1 REST
+| Health check | `http://localhost:8080/bigdata/status`
+|===
+
+== datastax-graph
+
+License acceptance required (`DS_LICENSE=accept` is already set in the quadlet).
+See xref:../how-to/configure-license-databases.adoc[Configure license-gated databases].
+
+[cols="<2,<5",frame=none,grid=rows]
+|===
+| Directory | `datastax-graph/`
+| Image | `docker.io/datastax/dse-server:6.8.49`
+| Ports | 9042 (CQL), 8182 (Gremlin)
+| Volume | `datastax-graph-data` → `/var/lib/cassandra`
+| Environment | `DS_LICENSE=accept`
+| Exec flag | `-g` (enables DSE Graph mode)
+| Secrets | None
+| Protocol | CQL (Cassandra), Gremlin
+| Startup time | Up to 300 s
+|===
+
+== dgraph
+
+Standalone image combines the Zero coordinator and Alpha data node.
+
+[cols="<2,<5",frame=none,grid=rows]
+|===
+| Directory | `dgraph/`
+| Image | `docker.io/dgraph/standalone:latest`
+| Ports | 8080 (HTTP + GraphQL), 9080 (gRPC)
+| Volume | `dgraph-data` → `/dgraph`
+| Secrets | None
+| Protocol | GraphQL, DQL, gRPC
+|===
+
+== falkordb
+
+Built on RedisGraph / Redis Modules architecture.
+
+[cols="<2,<5",frame=none,grid=rows]
+|===
+| Directory | `falkordb/`
+| Image | `docker.io/falkordb/falkordb:latest`
+| Ports | 6379 (Redis protocol), 3000 (browser UI)
+| Volume | `falkordb-data` → `/data`
+| Secrets | None
+| Protocol | Redis (RESP2/RESP3), Bolt
+| Health check | `redis-cli ping`
+|===
+
+== graphdb
+
+[cols="<2,<5",frame=none,grid=rows]
+|===
+| Directory | `graphdb/`
+| Image | `docker.io/ontotext/graphdb:latest`
+| Port | 7200 (HTTP)
+| Volume | `graphdb-data` → `/opt/graphdb/home`
+| Secrets | None
+| Protocol | SPARQL 1.1, RDF4J REST
+|===
+
+== gremlin-server
+
+Stateless — no persistent volume.
+Backed by TinkerGraph (in-memory) by default.
+
+[cols="<2,<5",frame=none,grid=rows]
+|===
+| Directory | `gremlin-server/`
+| Image | `docker.io/tinkerpop/gremlin-server:latest`
+| Port | 8182 (Gremlin WebSocket)
+| Volume | None
+| Secrets | None
+| Protocol | Gremlin over WebSocket
+|===
+
+== hugegraph
+
+[cols="<2,<5",frame=none,grid=rows]
+|===
+| Directory | `hugegraph/`
+| Image | `docker.io/apache/hugegraph:latest`
+| Port | 8080 (HTTP REST)
+| Volume | `hugegraph-data` → `/hugegraph/hugegraph-server/data`
+| Secrets | None
+| Protocol | Gremlin, HugeGraph REST API
+|===
+
+== janusgraph
+
+Uses BerkeleyDB + Lucene backend for self-contained persistence.
+
+[cols="<2,<5",frame=none,grid=rows]
+|===
+| Directory | `janusgraph/`
+| Image | `docker.io/janusgraph/janusgraph:latest`
+| Ports | 8182 (Gremlin WebSocket), 8183 (WebSocket)
+| Volume | `janusgraph-data` → `/var/lib/janusgraph`
+| Environment | `janusgraph.storage.backend=berkeleyje`
+               `janusgraph.storage.directory=/var/lib/janusgraph/data`
+               `janusgraph.index.search.backend=lucene`
+               `janusgraph.index.search.directory=/var/lib/janusgraph/index`
+| Secrets | None
+| Protocol | Gremlin over WebSocket
+|===
+
+== jena-fuseki
+
+[cols="<2,<5",frame=none,grid=rows]
+|===
+| Directory | `jena-fuseki/`
+| Image | `docker.io/stain/jena-fuseki:latest`
+| Port | 3030 (HTTP)
+| Volume | `jena-fuseki-data` → `/fuseki`
+| Secrets | `jena-fuseki-admin-password` → `ADMIN_PASSWORD`
+| Protocol | SPARQL 1.1, SPARQL Update, SPARQL Graph Store
+|===
+
+== memgraph
+
+[cols="<2,<5",frame=none,grid=rows]
+|===
+| Directory | `memgraph/`
+| Image | `docker.io/memgraph/memgraph:latest`
+| Ports | 7687 (Bolt), 7444 (monitoring)
+| Volumes | `memgraph-data` → `/var/lib/memgraph`
+           `memgraph-log` → `/var/log/memgraph`
+| Secrets | None
+| Protocol | Bolt, openCypher
+|===
+
+== neo4j
+
+[cols="<2,<5",frame=none,grid=rows]
+|===
+| Directory | `neo4j/`
+| Image | `docker.io/neo4j:latest`
+| Ports | 7474 (HTTP browser), 7687 (Bolt)
+| Volumes | `neo4j-data` → `/data`
+           `neo4j-logs` → `/logs`
+           `neo4j-plugins` → `/plugins`
+| Environment | `NEO4J_PLUGINS=["apoc"]`
+               `NEO4J_dbms_security_procedures_unrestricted=apoc.*`
+| Secrets | `neo4j-auth` → `NEO4J_AUTH` (format: `neo4j/<password>` or `none`)
+| Protocol | Bolt, HTTP (Cypher over REST)
+| Startup time | Up to 300 s
+|===
+
+== oracle-graph
+
+Requires Oracle Container Registry login and license acceptance.
+See xref:../how-to/configure-license-databases.adoc[Configure license-gated databases].
+
+[cols="<2,<5",frame=none,grid=rows]
+|===
+| Directory | `oracle-graph/`
+| Image | `container-registry.oracle.com/database/graph-server-client-lite:latest`
+| Port | 7007 (HTTPS)
+| Volume | `oracle-graph-data` → `/etc/oracle/graph/pgx`
+| Secrets | None (login to registry required)
+| Protocol | PGQL, Gremlin, SPARQL
+|===
+
+== puppygraph
+
+Stateless — queries existing data sources as a graph without ETL.
+
+[cols="<2,<5",frame=none,grid=rows]
+|===
+| Directory | `puppygraph/`
+| Image | `docker.io/puppygraph/puppygraph:stable`
+| Ports | 8081 (web UI), 8182 (Gremlin), 7687 (Bolt)
+| Volume | None
+| Secrets | None
+| Protocol | Gremlin, Bolt, openCypher
+|===
+
+== qlever
+
+Requires a pre-built RDF index volume.
+The container will not serve queries until an index is built.
+
+[cols="<2,<5",frame=none,grid=rows]
+|===
+| Directory | `qlever/`
+| Image | `docker.io/adfreiburg/qlever:latest`
+| Port | 7001 (HTTP)
+| Volume | `qlever-data` → `/index`
+| Secrets | None
+| Protocol | SPARQL 1.1
+| Note | Build index: `podman run --rm -v qlever-data:/index adfreiburg/qlever -i /index <ttl-file>`
+|===
+
+== rdf4j
+
+[cols="<2,<5",frame=none,grid=rows]
+|===
+| Directory | `rdf4j/`
+| Image | `docker.io/eclipse/rdf4j-workbench:latest`
+| Port | 8080 (HTTP)
+| Volume | `rdf4j-data` → `/var/rdf4j/server`
+| Secrets | None
+| Protocol | SPARQL 1.1, RDF4J REST API
+|===
+
+== rdfox
+
+Requires registry login and a base64-encoded license secret.
+See xref:../how-to/configure-license-databases.adoc[Configure license-gated databases].
+
+[cols="<2,<5",frame=none,grid=rows]
+|===
+| Directory | `rdfox/`
+| Image | `registry.oxfordsemantic.tech/rdfox:latest`
+| Port | 12110 (HTTP)
+| Volume | `rdfox-data` → `/home/rdfox/.RDFox`
+| Secrets | `rdfox-license` → `RDFOX_LICENSE_CONTENT`
+| Protocol | SPARQL 1.1, Datalog, REST API
+|===
+
+== stardog
+
+Requires a license `.bin` file placed in the data volume before first start.
+See xref:../how-to/configure-license-databases.adoc[Configure license-gated databases].
+
+[cols="<2,<5",frame=none,grid=rows]
+|===
+| Directory | `stardog/`
+| Image | `docker.io/stardog/stardog:latest`
+| Port | 5820 (HTTP)
+| Volume | `stardog-data` → `/var/opt/stardog`
+| Secrets | None (license file via volume)
+| Protocol | SPARQL 1.1, GraphQL, SMS
+| Default credentials | `admin` / `admin`
+|===
+
+== tentris
+
+[cols="<2,<5",frame=none,grid=rows]
+|===
+| Directory | `tentris/`
+| Image | `ghcr.io/dice-group/tentris-server:latest`
+| Port | 9080 (HTTP)
+| Volume | `tentris-data` → `/tentris-data`
+| Secrets | None
+| Protocol | SPARQL 1.1
+| Registry | GitHub Container Registry (`ghcr.io`)
+|===
+
+== ultipa
+
+Enterprise distribution.
+Confirm the exact image name with Ultipa before deploying.
+
+[cols="<2,<5",frame=none,grid=rows]
+|===
+| Directory | `ultipa/`
+| Image | `docker.io/ultipa/ultipa-server:latest` (verify with vendor)
+| Ports | 6379 (query protocol), 9000 (management HTTP)
+| Volume | `ultipa-data` → `/var/lib/ultipa`
+| Secrets | None
+| Protocol | UQL (Ultipa Query Language)
+|===

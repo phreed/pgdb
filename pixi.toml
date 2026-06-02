@@ -1,0 +1,34 @@
+[workspace]
+authors = ["Fredrick Eisele <fred.eisele@vanderbilt.edu>"]
+channels = ["conda-forge"]
+name = "pgdb"
+platforms = ["linux-64"]
+version = "0.1.0"
+
+[tasks.status]
+cmd = "nu pixi-script/status.nu"
+description = "Show systemd active state and podman health for every quadlet service"
+
+[tasks.create-secrets]
+cmd = "nu pixi-script/create-secrets.nu"
+description = "Create Podman secrets from podman.secret.toml (use -- --force to overwrite)"
+
+[tasks.install]
+cmd = "nu pixi-script/install.nu"
+description = "Deploy quadlet symlinks with dotter and reload the systemd user daemon"
+
+[tasks.start]
+cmd = "nu pixi-script/start.nu"
+description = "Start all services enabled in .dotter/local.toml"
+
+[tasks.restart]
+cmd = "nu pixi-script/restart.nu"
+description = "Restart all failed or transitional quadlet services"
+
+[tasks.trouble]
+cmd = "nu pixi-script/trouble.nu"
+description = "Show diagnostics for a failing service, or list all failed services"
+
+[dependencies]
+nushell = ">=0.100"
+dotter-rs = ">=0.13.4"

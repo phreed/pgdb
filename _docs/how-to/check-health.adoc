@@ -1,0 +1,179 @@
+= How to check database health
+:toc: left
+:toclevels: 2
+:sectanchors:
+:sectlinks:
+:icons: font
+
+== Quick status for one service
+
+[source,bash]
+----
+systemctl --user status <database>.service
+----
+
+Key fields to read:
+
+`Active: active (running)`:: Service is up.
+`Active: activating (start)`:: Still inside `HealthStartPeriod`.
+`Active: failed`:: Crashed; see xref:#_read_logs[logs].
+
+== Container health state
+
+[source,bash]
+----
+podman ps --filter name=systemd-<database> \
+          --format "{{.Names}}\t{{.Status}}"
+----
+
+Health states:
+
+`(healthy)`:: Health check passing.
+`(unhealthy)`:: Health check failing but container still running.
+`(health: starting)`:: Inside the start period; checks not yet evaluated.
+
+Run a one-off health check immediately:
+
+[source,bash]
+----
+podman healthcheck run systemd-<database>
+----
+
+== Read logs
+
+[source,bash]
+----
+journalctl --user -fu <database>.service
+----
+
+For the last 100 lines without following:
+
+[source,bash]
+----
+journalctl --user -n 100 -u <database>.service
+----
+
+For multi-container setups, tail all at once (Aerospike example):
+
+[source,bash]
+----
+journalctl --user -f \
+  -u aerospike-server.service \
+  -u aerospike-graph.service
+----
+
+== Health endpoints by database
+
+Each container's `HealthCmd=` tests the endpoint listed below.
+You can call these endpoints directly to check liveness independently of Podman.
+
+[cols="<3,<5,<1",options="header"]
+|===
+| Database | Health endpoint | Protocol
+
+| AllegroGraph
+| `http://localhost:10035/version`
+| HTTP
+
+| Apache AGE
+| `pg_isready -U age_user -d age_db`
+| PostgreSQL
+
+| ArcadeDB
+| `http://localhost:2480/api/v1/ready`
+| HTTP
+
+| Blazegraph
+| `http://localhost:9999/bigdata/status`
+| HTTP
+
+| DataStax Graph
+| `cqlsh -e 'describe cluster'`
+| CQL
+
+| Dgraph
+| `http://localhost:8080/health`
+| HTTP
+
+| FalkorDB
+| `redis-cli ping`
+| Redis
+
+| GraphDB
+| `http://localhost:7200/rest/repositories`
+| HTTP
+
+| Gremlin Server
+| `http://localhost:8182/gremlin`
+| HTTP
+
+| HugeGraph
+| `http://localhost:8080/apis`
+| HTTP
+
+| JanusGraph
+| `http://localhost:8182/gremlin`
+| HTTP
+
+| Jena Fuseki
+| `http://localhost:3030/$/ping`
+| HTTP
+
+| Memgraph
+| `mgconsole --no-history`
+| Bolt
+
+| Neo4j
+| `http://localhost:7474`
+| HTTP
+
+| Oracle Graph
+| `https://localhost:7007/ui`
+| HTTPS
+
+| PuppyGraph
+| `http://localhost:8081/status`
+| HTTP
+
+| QLever
+| `http://localhost:7001/`
+| HTTP
+
+| RDF4J
+| `http://localhost:8080/rdf4j-workbench`
+| HTTP
+
+| RDFox
+| `http://localhost:12110/datastores`
+| HTTP
+
+| Stardog
+| `http://localhost:5820/admin/status`
+| HTTP
+
+| Tentris
+| `http://localhost:9080/sparql`
+| HTTP
+
+| Aerospike Graph
+| `http://localhost:8182/gremlin`
+| HTTP
+|===
+
+== Diagnose a stuck startup
+
+. Check the `HealthStartPeriod` — databases with slow JVM startup (Neo4j: 60 s, JanusGraph: 90 s, DataStax: 120 s) take longer before the first check runs.
+. Check volume mounts are present: `podman volume ls | grep <database>`
+. Check secrets exist: `podman secret ls`
+. Check image was pulled: `podman image ls | grep <image-name>`
+. Pull manually if needed: `podman pull <image>`
+
+== Diagnose an unhealthy container
+
+[source,bash]
+----
+podman inspect systemd-<database> \
+  --format '{{json .State.Health}}' | jq .
+----
+
+This shows the last five health check outputs and exit codes, which reveals exactly what the health command printed when it failed.

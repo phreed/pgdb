@@ -1,0 +1,26 @@
+[Unit]
+Description=Dgraph — distributed graph database with GraphQL API
+Documentation=https://hub.docker.com/r/dgraph/standalone
+Wants=network-online.target dgraph-data-volume.service
+After=network-online.target dgraph-data-volume.service
+
+[Container]
+AutoUpdate=registry
+Image=docker.io/dgraph/standalone:latest
+ContainerName=systemd-dgraph
+PublishPort=8080:8080
+PublishPort=9080:9080
+Volume=dgraph-data:/dgraph
+HealthCmd=["curl","-sf","http://localhost:8080/health"]
+HealthInterval=30s
+HealthRetries=3
+HealthStartPeriod=60s
+HealthTimeout=10s
+Label=app=dgraph
+
+[Service]
+Restart=always
+TimeoutStartSec=120
+
+[Install]
+WantedBy=multi-user.target default.target

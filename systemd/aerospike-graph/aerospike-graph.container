@@ -1,0 +1,28 @@
+[Unit]
+Description=Aerospike Graph Service — Gremlin traversal layer over Aerospike Server
+Documentation=https://hub.docker.com/r/aerospike/aerospike-graph-service
+Wants=network-online.target aerospike-graph.network aerospike-server.service
+After=network-online.target aerospike-graph.network aerospike-server.service
+
+[Container]
+AutoUpdate=registry
+Image=docker.io/aerospike/aerospike-graph-service:latest
+ContainerName=systemd-aerospike-graph
+Network=aerospike-graph.network
+PublishPort=8182:8182
+Environment=aerospike.client.host=aerospike-server
+Environment=aerospike.client.port=3000
+HealthCmd=["curl","-sf","http://localhost:8182/gremlin"]
+HealthInterval=30s
+HealthRetries=3
+HealthStartPeriod=60s
+HealthTimeout=10s
+Label=app=aerospike-graph
+Label=component=graph-service
+
+[Service]
+Restart=always
+TimeoutStartSec=120
+
+[Install]
+WantedBy=multi-user.target default.target

@@ -1,0 +1,27 @@
+[Unit]
+Description=Memgraph — in-memory graph database with Bolt protocol support
+Documentation=https://hub.docker.com/r/memgraph/memgraph
+Wants=network-online.target memgraph-data-volume.service memgraph-log-volume.service
+After=network-online.target memgraph-data-volume.service memgraph-log-volume.service
+
+[Container]
+AutoUpdate=registry
+Image=docker.io/memgraph/memgraph:latest
+ContainerName=systemd-memgraph
+PublishPort=7687:7687
+PublishPort=7444:7444
+Volume=memgraph-data:/var/lib/memgraph
+Volume=memgraph-log:/var/log/memgraph
+HealthCmd=["curl","-sf","http://localhost:7444"]
+HealthInterval=30s
+HealthRetries=3
+HealthStartPeriod=30s
+HealthTimeout=10s
+Label=app=memgraph
+
+[Service]
+Restart=always
+TimeoutStartSec=60
+
+[Install]
+WantedBy=multi-user.target default.target
