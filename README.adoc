@@ -1,0 +1,209 @@
+= pgdb — Graph Database Quadlets
+Fred Eisele <fred.eisele@vanderbilt.edu>
+:toc: left
+:toclevels: 2
+:sectanchors:
+:sectlinks:
+:icons: font
+
+Podman quadlet definitions for 23 graph database engines, managed as rootless systemd user services on a Linux desktop or server.
+
+This repository is part of the *Hydra* project, which builds pipelines that transform structured data (CSV, relational tables) into property graphs and RDF knowledge graphs.
+The companion tutorial https://github.com/gdotv/tutorial-hydra-csv-to-graph[tutorial-hydra-csv-to-graph] demonstrates an end-to-end pipeline from CSV through GraphSON to RDF + SHACL, queried via Apache Jena Fuseki.
+The quadlets defined here are the infrastructure layer that those pipelines connect to.
+
+== Quick start
+
+.Prerequisites
+* https://podman.io[Podman] 4.4 or later
+* https://pixi.sh[pixi] — manages Nushell and dotter as project-local tools
+* https://github.com/AGWA/git-crypt[git-crypt] — for encrypting `podman.secret.toml` (optional but recommended)
+
+.Install and start neo4j (the default enabled database)
+[source,bash]
+----
+# Install symlinks and reload systemd
+pixi run install
+
+# Create Podman secrets from podman.secret.toml
+pixi run create-secrets
+
+# Start enabled services
+pixi run start
+----
+
+See xref:_docs/tutorials/getting-started.adoc[Getting started] for a full walkthrough.
+
+== Pixi tasks
+
+[cols="<2,<5",options="header"]
+|===
+| Task | Description
+
+| `pixi run install`
+| Deploy quadlet symlinks with dotter and reload the systemd user daemon
+
+| `pixi run create-secrets`
+| Create Podman secrets from `podman.secret.toml` (add `-- --force` to overwrite)
+
+| `pixi run start`
+| Start all services listed in `.dotter/local.toml`
+
+| `pixi run restart`
+| Restart all failed or transitional services
+
+| `pixi run status`
+| Show systemd active state and Podman health for every quadlet service
+
+| `pixi run status -- -w`
+| Watch mode — refresh status every 5 s (or `-- -w -i 10` for 10 s)
+
+| `pixi run trouble`
+| Interactive troubleshooter: list failed services, inspect status / logs / health
+|===
+
+== Repository layout
+
+[source]
+----
+pgdb/
+  systemd/          Quadlet source files — one subdirectory per database engine
+  pixi-script/      Nushell scripts backing the pixi tasks
+  _docs/            Diátaxis documentation (tutorials, how-to, reference, explanation)
+  .dotter/          Dotter configuration (global.toml + local.toml)
+  podman.secret.toml  Podman secrets — git-crypt encrypted, gitignored by default
+  pixi.toml         Pixi workspace: tasks and dependencies
+----
+
+=== `systemd/`
+
+One subdirectory per database, containing `.container`, `.volume`, and (for Aerospike Graph) `.network` quadlet files.
+Dotter symlinks the selected databases into `~/.config/containers/systemd/pgdb/`.
+Edit `.dotter/local.toml` to select which databases to deploy — only `neo4j` is enabled by default.
+
+The 23 engines covered span property graph, RDF/triplestore, multi-model, and distributed backends.
+See xref:_docs/reference/database-inventory.adoc[Database inventory] for the full list with images, ports, and protocols.
+
+=== `pixi-script/`
+
+[cols="<2,<5",options="header"]
+|===
+| File | Purpose
+
+| `mod.nu`
+| Shared Nushell module: `service-state`, `container-health`, `enabled-packages`, `package-services`, `missing-secrets`, `get-failed`
+
+| `install.nu`
+| Runs `dotter deploy` and `systemctl --user daemon-reload`
+
+| `create-secrets.nu`
+| Creates Podman secrets from `podman.secret.toml`
+
+| `start.nu`
+| Starts enabled packages; warns and adds placeholders for missing secrets
+
+| `restart.nu`
+| Restarts all services currently in a failed or transitional state
+
+| `status.nu`
+| Tabular status display with optional `--watch` mode
+
+| `trouble.nu`
+| Interactive REPL: `df` list failed, `aa <id>` activate, `sa`/`la`/`ha` diagnose
+|===
+
+=== `_docs/`
+
+Documentation follows the https://diataxis.fr[Diátaxis] framework.
+
+[cols="<2,<5",options="header"]
+|===
+| Section | Contents
+
+| xref:_docs/tutorials/getting-started.adoc[tutorials/getting-started]
+| Run your first graph database end-to-end
+
+| xref:_docs/tutorials/multi-container-setup.adoc[tutorials/multi-container-setup]
+| The Aerospike Graph two-container arrangement
+
+| xref:_docs/how-to/activate-a-quadlet.adoc[how-to/activate-a-quadlet]
+| Select databases in `local.toml`, deploy symlinks, start services
+
+| xref:_docs/how-to/create-secrets.adoc[how-to/create-secrets]
+| Create Podman secrets for the six password-protected engines
+
+| xref:_docs/how-to/check-health.adoc[how-to/check-health]
+| Read service state, container health, and logs
+
+| xref:_docs/how-to/update-images.adoc[how-to/update-images]
+| Automatic and manual image updates; pinning and rollback
+
+| xref:_docs/how-to/configure-license-databases.adoc[how-to/configure-license-databases]
+| Oracle Graph, RDFox, Stardog, DataStax — registry logins and license files
+
+| xref:_docs/reference/database-inventory.adoc[reference/database-inventory]
+| Complete per-engine reference: image, ports, volumes, secrets, protocol
+
+| xref:_docs/reference/quadlet-fields.adoc[reference/quadlet-fields]
+| Every `.container` / `.volume` / `.network` field used in this project
+
+| xref:_docs/reference/secrets.adoc[reference/secrets]
+| All six secret names, target environment variables, and creation commands
+
+| xref:_docs/explanation/why-quadlets.adoc[explanation/why-quadlets]
+| Quadlets vs Compose vs Kubernetes; user vs system services
+
+| xref:_docs/explanation/architecture.adoc[explanation/architecture]
+| The source → dotter → symlink → quadlet generator → systemd pipeline
+
+| xref:_docs/explanation/graph-database-categories.adoc[explanation/graph-database-categories]
+| Property graph, RDF/SPARQL, multi-model, and distributed backends compared
+|===
+
+=== `podman.secret.toml`
+
+Stores the values for all six Podman secrets (Neo4j auth, database passwords, RDFox license).
+Encrypted with https://github.com/AGWA/git-crypt[git-crypt] before committing; ignored by git by default.
+A sample with placeholder values lives at `_docs/sample-podman.secret.toml`.
+
+First-time setup:
+
+[source,bash]
+----
+git-crypt init
+git-crypt add-gpg-user <your-gpg-key-id>
+git add -f podman.secret.toml
+----
+
+== Relationship to tutorial-hydra-csv-to-graph
+
+https://github.com/gdotv/tutorial-hydra-csv-to-graph[tutorial-hydra-csv-to-graph] walks through a complete data transformation:
+
+. Read a veterinary clinic dataset from CSV files
+. Convert to a property graph (GraphSON format)
+. Encode the graph as RDF with SHACL constraints
+. Load and query the RDF graph via *Apache Jena Fuseki*
+
+This repository (`pgdb`) provides the running Jena Fuseki instance that the final step connects to, along with 22 other graph database engines for experimenting with alternative backends.
+The `jena-fuseki` quadlet is enabled alongside `neo4j` when you want to run the full tutorial pipeline locally.
+
+To add Jena Fuseki alongside the default Neo4j deployment, uncomment it in `.dotter/local.toml`:
+
+[source,toml]
+----
+packages = [
+    "jena-fuseki",
+    "neo4j",
+]
+----
+
+Then run:
+
+[source,bash]
+----
+pixi run install && pixi run create-secrets && pixi run start
+----
+
+== License
+
+MIT — see `LICENSE`.
