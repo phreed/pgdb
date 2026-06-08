@@ -9,7 +9,7 @@ AutoUpdate=registry
 Image=docker.io/datastax/dse-server:6.8.49
 ContainerName=systemd-datastax-graph
 PublishPort=9042:9042
-PublishPort=8182:8182
+PublishPort=8187:8182
 Volume=datastax-graph-data:/var/lib/cassandra
 # Accept DataStax Enterprise license
 Environment=DS_LICENSE=accept

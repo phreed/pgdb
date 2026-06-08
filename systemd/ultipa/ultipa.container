@@ -10,7 +10,7 @@ AutoUpdate=registry
 # Registry may be: registry.us.ultipa.com or similar
 Image=docker.io/ultipa/ultipa-server:latest
 ContainerName=systemd-ultipa
-PublishPort=6379:6379
+PublishPort=6380:6379
 PublishPort=9000:9000
 Volume=ultipa-data:/var/lib/ultipa
 HealthCmd=["curl","-sf","http://localhost:9000/health"]

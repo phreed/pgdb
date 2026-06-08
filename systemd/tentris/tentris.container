@@ -8,7 +8,7 @@ After=network-online.target tentris-data-volume.service
 AutoUpdate=registry
 Image=ghcr.io/dice-group/tentris-server:latest
 ContainerName=systemd-tentris
-PublishPort=9080:9080
+PublishPort=9081:9080
 Volume=tentris-data:/tentris-data
 HealthCmd=["curl","-sf","http://localhost:9080/sparql?query=SELECT+*+WHERE%7B%7D&format=json"]
 HealthInterval=30s

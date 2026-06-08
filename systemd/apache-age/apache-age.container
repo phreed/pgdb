@@ -1,6 +1,6 @@
 [Unit]
-Description=Apache AGE — PostgreSQL extension for graph queries
-Documentation=https://hub.docker.com/r/apache/age
+Description=Apache AGE — openCypher graph queries as a PostgreSQL extension
+Documentation=https://age.apache.org/getstarted/quickstart
 Wants=network-online.target apache-age-data-volume.service
 After=network-online.target apache-age-data-volume.service
 
@@ -8,11 +8,10 @@ After=network-online.target apache-age-data-volume.service
 AutoUpdate=registry
 Image=docker.io/apache/age:latest
 ContainerName=systemd-apache-age
-PublishPort=5432:5432
+PublishPort=5455:5432
 Volume=apache-age-data:/var/lib/postgresql/data
 Environment=POSTGRES_USER=age_user
 Environment=POSTGRES_DB=age_db
-# Environment=POSTGRES_PASSWORD=changeme
 Secret=apache-age-password,type=env,target=POSTGRES_PASSWORD
 HealthCmd=["pg_isready","-U","age_user","-d","age_db"]
 HealthInterval=30s

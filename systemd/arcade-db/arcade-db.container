@@ -10,7 +10,7 @@ Image=docker.io/arcadedb/arcadedb:latest
 ContainerName=systemd-arcade-db
 PublishPort=2480:2480
 PublishPort=2424:2424
-PublishPort=8182:8182
+PublishPort=8186:8182
 Volume=arcade-db-data:/home/arcadedb/databases
 Environment=arcadedb.server.defaultDatabases=GratefulDeadConcerts[admin:admin]
 # Set root password via secret

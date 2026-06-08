@@ -1,0 +1,8 @@
+[Unit]
+Description=PgGraph PostgreSQL data volume
+
+[Volume]
+VolumeName=pggraph-data
+
+[Install]
+WantedBy=multi-user.target default.target

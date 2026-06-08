@@ -9,7 +9,7 @@ AutoUpdate=registry
 Image=docker.io/aerospike/aerospike-graph-service:latest
 ContainerName=systemd-aerospike-graph
 Network=aerospike-graph.network
-PublishPort=8182:8182
+PublishPort=8185:8182
 Environment=aerospike.client.host=aerospike-server
 Environment=aerospike.client.port=3000
 HealthCmd=["curl","-sf","http://localhost:8182/gremlin"]

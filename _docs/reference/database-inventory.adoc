@@ -5,8 +5,59 @@
 :sectlinks:
 :icons: font
 
-Complete reference for all 23 graph database quadlets.
+Complete reference for all 25 graph database quadlets.
 Databases are listed alphabetically by directory name.
+
+== Port map
+
+All host-side ports are unique so that multiple engines can run concurrently.
+Where a service's native port would collide, the host port is offset; the container-internal port is unchanged.
+
+[cols="^1,<3,<4",options="header"]
+|===
+| Host port | Database | Purpose
+
+| 2424  | arcade-db        | Binary protocol
+| 2480  | arcade-db        | HTTP console / REST API
+| 3000  | aerospike-server | Aerospike native (info + fabric)
+| 3001  | aerospike-server | Aerospike heartbeat
+| 3002  | aerospike-server | Aerospike mesh
+| 3030  | jena-fuseki      | SPARQL HTTP
+| 3100  | falkordb         | Browser UI (native 3000)
+| 5432  | pggraph          | PostgreSQL
+| 5455  | apache-age       | PostgreSQL / openCypher (native 5432)
+| 5820  | stardog          | HTTP REST
+| 6379  | falkordb         | Redis / RESP protocol
+| 6380  | ultipa           | Query protocol (native 6379)
+| 7001  | qlever           | SPARQL HTTP
+| 7007  | oracle-graph     | HTTPS (PGX)
+| 7200  | graphdb          | HTTP / SPARQL
+| 7444  | memgraph         | Monitoring HTTP
+| 7474  | neo4j            | HTTP browser
+| 7687  | neo4j            | Bolt
+| 7688  | memgraph         | Bolt (native 7687)
+| 7689  | puppygraph       | Bolt (native 7687)
+| 8080  | dgraph           | Alpha HTTP + GraphQL
+| 8081  | puppygraph       | Web UI
+| 8082  | hugegraph        | HTTP REST (native 8080)
+| 8083  | rdf4j            | Workbench HTTP (native 8080)
+| 8182  | gremlin-server   | Gremlin WebSocket
+| 8183  | janusgraph       | Gremlin admin
+| 8184  | janusgraph       | Gremlin WebSocket (native 8182)
+| 8185  | aerospike-graph  | Gremlin WebSocket (native 8182)
+| 8186  | arcade-db        | Gremlin WebSocket (native 8182)
+| 8187  | datastax-graph   | Gremlin WebSocket (native 8182)
+| 8188  | puppygraph       | Gremlin WebSocket (native 8182)
+| 9000  | ultipa           | Management HTTP
+| 9042  | datastax-graph   | CQL (Cassandra)
+| 9080  | dgraph           | Alpha gRPC
+| 9081  | tentris          | SPARQL HTTP (native 9080)
+| 9999  | blazegraph       | HTTP (native 8080)
+| 10035 | allegro-graph    | HTTP REST / WebSocket
+| 12110 | rdfox            | HTTP REST
+|===
+
+== Per-engine reference
 
 == aerospike-graph
 
@@ -21,7 +72,7 @@ See xref:../tutorials/multi-container-setup.adoc[Multi-container setup tutorial]
 | Network | `aerospike-graph.network` (bridge)
 | Images | `docker.io/aerospike/aerospike-server:latest` (backend)
           `docker.io/aerospike/aerospike-graph-service:latest` (frontend)
-| Ports | 3000–3002 (Aerospike internal), 8182 (Gremlin WebSocket)
+| Ports | 3000–3002 (Aerospike internal), 8185 (Gremlin WebSocket)
 | Volume | `aerospike-graph-data` → `/opt/aerospike/data`
 | Environment | `aerospike.client.host=aerospike-server`, `aerospike.client.port=3000`
 | Secrets | None
@@ -43,13 +94,23 @@ See xref:../tutorials/multi-container-setup.adoc[Multi-container setup tutorial]
 
 == apache-age
 
-PostgreSQL with the Apache AGE graph extension baked in.
+PostgreSQL with the Apache AGE graph extension baked in, enabling openCypher graph queries alongside standard SQL.
+After connecting, load the extension and set the search path before issuing graph queries:
+
+[source,sql]
+----
+CREATE EXTENSION age;
+LOAD 'age';
+SET search_path = ag_catalog, "$user", public;
+----
+
+See https://age.apache.org/getstarted/quickstart[age.apache.org quickstart].
 
 [cols="<2,<5",frame=none,grid=rows]
 |===
 | Directory | `apache-age/`
 | Image | `docker.io/apache/age:latest`
-| Port | 5432 (PostgreSQL)
+| Port | 5455 (PostgreSQL; native 5432)
 | Volume | `apache-age-data` → `/var/lib/postgresql/data`
 | Environment | `POSTGRES_USER=age_user`, `POSTGRES_DB=age_db`
 | Secrets | `apache-age-password` → `POSTGRES_PASSWORD`
@@ -63,7 +124,7 @@ PostgreSQL with the Apache AGE graph extension baked in.
 |===
 | Directory | `arcade-db/`
 | Image | `docker.io/arcadedb/arcadedb:latest`
-| Ports | 2480 (HTTP API), 2424 (binary), 8182 (Gremlin)
+| Ports | 2480 (HTTP API), 2424 (binary), 8186 (Gremlin)
 | Volume | `arcade-db-data` → `/home/arcadedb/databases`
 | Environment | `arcadedb.server.defaultDatabases=GratefulDeadConcerts[admin:admin]`
 | Secrets | `arcade-db-root-password` → `arcadedb.server.rootPassword`
@@ -92,7 +153,7 @@ See xref:../how-to/configure-license-databases.adoc[Configure license-gated data
 |===
 | Directory | `datastax-graph/`
 | Image | `docker.io/datastax/dse-server:6.8.49`
-| Ports | 9042 (CQL), 8182 (Gremlin)
+| Ports | 9042 (CQL), 8187 (Gremlin)
 | Volume | `datastax-graph-data` → `/var/lib/cassandra`
 | Environment | `DS_LICENSE=accept`
 | Exec flag | `-g` (enables DSE Graph mode)
@@ -123,7 +184,7 @@ Built on RedisGraph / Redis Modules architecture.
 |===
 | Directory | `falkordb/`
 | Image | `docker.io/falkordb/falkordb:latest`
-| Ports | 6379 (Redis protocol), 3000 (browser UI)
+| Ports | 6379 (Redis protocol), 3100 (browser UI; native 3000)
 | Volume | `falkordb-data` → `/data`
 | Secrets | None
 | Protocol | Redis (RESP2/RESP3), Bolt
@@ -163,7 +224,7 @@ Backed by TinkerGraph (in-memory) by default.
 |===
 | Directory | `hugegraph/`
 | Image | `docker.io/apache/hugegraph:latest`
-| Port | 8080 (HTTP REST)
+| Port | 8082 (HTTP REST; native 8080)
 | Volume | `hugegraph-data` → `/hugegraph/hugegraph-server/data`
 | Secrets | None
 | Protocol | Gremlin, HugeGraph REST API
@@ -177,7 +238,7 @@ Uses BerkeleyDB + Lucene backend for self-contained persistence.
 |===
 | Directory | `janusgraph/`
 | Image | `docker.io/janusgraph/janusgraph:latest`
-| Ports | 8182 (Gremlin WebSocket), 8183 (WebSocket)
+| Ports | 8184 (Gremlin WebSocket; native 8182), 8183 (admin)
 | Volume | `janusgraph-data` → `/var/lib/janusgraph`
 | Environment | `janusgraph.storage.backend=berkeleyje`
                `janusgraph.storage.directory=/var/lib/janusgraph/data`
@@ -205,7 +266,7 @@ Uses BerkeleyDB + Lucene backend for self-contained persistence.
 |===
 | Directory | `memgraph/`
 | Image | `docker.io/memgraph/memgraph:latest`
-| Ports | 7687 (Bolt), 7444 (monitoring)
+| Ports | 7688 (Bolt; native 7687), 7444 (monitoring)
 | Volumes | `memgraph-data` → `/var/lib/memgraph`
            `memgraph-log` → `/var/log/memgraph`
 | Secrets | None
@@ -244,6 +305,26 @@ See xref:../how-to/configure-license-databases.adoc[Configure license-gated data
 | Protocol | PGQL, Gremlin, SPARQL
 |===
 
+== pggraph
+
+PostgreSQL with graph traversal built in.
+Provides bounded traversal, shortest-path, and relationship queries directly on ordinary PostgreSQL tables using compressed-sparse-row (CSR) indexes as derived, rebuildable state.
+No separate graph storage — PostgreSQL remains the authoritative source.
+See https://github.com/Evokoa/pgGraph[github.com/Evokoa/pgGraph].
+
+[cols="<2,<5",frame=none,grid=rows]
+|===
+| Directory | `pggraph/`
+| Image | `ghcr.io/evokoa/pggraph:0.1.7`
+| Port | 5432 (PostgreSQL)
+| Volume | `pggraph-data` → `/var/lib/postgresql/data`
+| Environment | `POSTGRES_USER=postgres`, `POSTGRES_DB=graph`
+| Secrets | `pggraph-password` → `POSTGRES_PASSWORD`
+| Protocol | PostgreSQL wire protocol; graph functions via SQL
+| Health check | `pg_isready -U postgres -d graph`
+| Status | Early alpha
+|===
+
 == puppygraph
 
 Stateless — queries existing data sources as a graph without ETL.
@@ -252,7 +333,7 @@ Stateless — queries existing data sources as a graph without ETL.
 |===
 | Directory | `puppygraph/`
 | Image | `docker.io/puppygraph/puppygraph:stable`
-| Ports | 8081 (web UI), 8182 (Gremlin), 7687 (Bolt)
+| Ports | 8081 (web UI), 8188 (Gremlin; native 8182), 7689 (Bolt; native 7687)
 | Volume | None
 | Secrets | None
 | Protocol | Gremlin, Bolt, openCypher
@@ -280,7 +361,7 @@ The container will not serve queries until an index is built.
 |===
 | Directory | `rdf4j/`
 | Image | `docker.io/eclipse/rdf4j-workbench:latest`
-| Port | 8080 (HTTP)
+| Port | 8083 (HTTP; native 8080)
 | Volume | `rdf4j-data` → `/var/rdf4j/server`
 | Secrets | None
 | Protocol | SPARQL 1.1, RDF4J REST API
@@ -323,7 +404,7 @@ See xref:../how-to/configure-license-databases.adoc[Configure license-gated data
 |===
 | Directory | `tentris/`
 | Image | `ghcr.io/dice-group/tentris-server:latest`
-| Port | 9080 (HTTP)
+| Port | 9081 (HTTP; native 9080)
 | Volume | `tentris-data` → `/tentris-data`
 | Secrets | None
 | Protocol | SPARQL 1.1
@@ -339,7 +420,7 @@ Confirm the exact image name with Ultipa before deploying.
 |===
 | Directory | `ultipa/`
 | Image | `docker.io/ultipa/ultipa-server:latest` (verify with vendor)
-| Ports | 6379 (query protocol), 9000 (management HTTP)
+| Ports | 6380 (query protocol; native 6379), 9000 (management HTTP)
 | Volume | `ultipa-data` → `/var/lib/ultipa`
 | Secrets | None
 | Protocol | UQL (Ultipa Query Language)

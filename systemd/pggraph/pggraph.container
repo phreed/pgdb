@@ -1,0 +1,27 @@
+[Unit]
+Description=pgGraph — graph traversal and shortest-path queries on ordinary PostgreSQL tables
+Documentation=https://github.com/Evokoa/pgGraph
+Wants=network-online.target pggraph-data-volume.service
+After=network-online.target pggraph-data-volume.service
+
+[Container]
+Image=ghcr.io/evokoa/pggraph:0.1.7
+ContainerName=systemd-pggraph
+PublishPort=5432:5432
+Volume=pggraph-data:/var/lib/postgresql/data
+Environment=POSTGRES_USER=postgres
+Environment=POSTGRES_DB=graph
+Secret=pggraph-password,type=env,target=POSTGRES_PASSWORD
+HealthCmd=["pg_isready","-U","postgres","-d","graph"]
+HealthInterval=30s
+HealthRetries=3
+HealthStartPeriod=30s
+HealthTimeout=10s
+Label=app=pggraph
+
+[Service]
+Restart=always
+TimeoutStartSec=120
+
+[Install]
+WantedBy=multi-user.target default.target

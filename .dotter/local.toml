@@ -19,6 +19,7 @@ packages = [
     # "memgraph",
     "neo4j",
     # "oracle-graph",
+    # "pggraph",
     # "puppygraph",
     # "qlever",
     # "rdf4j",

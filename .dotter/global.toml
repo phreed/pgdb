@@ -93,6 +93,10 @@
 "systemd/tentris/tentris.container"                    = "~/.config/containers/systemd/pgdb/tentris/tentris.container"
 "systemd/tentris/tentris-data.volume"                  = "~/.config/containers/systemd/pgdb/tentris/tentris-data.volume"
 
+[pggraph.files]
+"systemd/pggraph/pggraph.container"                    = "~/.config/containers/systemd/pgdb/pggraph/pggraph.container"
+"systemd/pggraph/pggraph-data.volume"                  = "~/.config/containers/systemd/pgdb/pggraph/pggraph-data.volume"
+
 [ultipa.files]
 "systemd/ultipa/ultipa.container"                      = "~/.config/containers/systemd/pgdb/ultipa/ultipa.container"
 "systemd/ultipa/ultipa-data.volume"                    = "~/.config/containers/systemd/pgdb/ultipa/ultipa-data.volume"
